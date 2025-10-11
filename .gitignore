@@ -1,0 +1,16 @@
+# Archivos y carpetas generados por Node.js / React
+/node_modules
+/frontend_qr_asistencia/build
+/frontend_qr_asistencia/.env.local
+/frontend_qr_asistencia/npm-debug.log
+
+# Archivos y carpetas generados por Python / FastAPI
+__pycache__/
+*.pyc
+.pytest_cache/
+.venv/
+/backend_qr_asistencia/.vscode
+
+# Archivos de Base de Datos (Si usas SQLite local)
+*.db
+*.sqlite3
