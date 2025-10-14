@@ -71,9 +71,5 @@ class AsistenciaCreate(BaseModel):
     estado: str
     token_qr: str
 
-class AsistenciaRequest(BaseModel):
-    clase_id: int
-    alumno_id: int
-    timestamp: datetime
-    estado: str
-    token_qr: str
+class AsistenciaToken(BaseModel):
+    qr_token: str

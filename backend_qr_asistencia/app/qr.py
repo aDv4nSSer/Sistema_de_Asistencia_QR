@@ -1,138 +1,114 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
-from sqlalchemy.exc import IntegrityError # 👈 IMPORTAR IntegrityError
+from sqlalchemy.exc import IntegrityError
 from datetime import datetime, timedelta
 from io import BytesIO
 import qrcode
-import json
-from app.auth_utils import get_current_user_with_roles
+from jose import JWTError, jwt
 
-# Mantenemos las clases específicas que usamos en el código:
-from app.schemas import QrCodeCreate, AsistenciaCreate, AsistenciaRequest 
-
-# 👈 AÑADE ESTA LÍNEA CRÍTICA para que Python reconozca 'schemas.QrCode'
-from app import schemas 
-
+# Importaciones de la aplicación
+from app import schemas, crud
 from app.database import get_db
-from app import crud 
-from app.models import QrCode, Asistencia
+from app.auth_utils import get_current_user_with_roles
+from app.core.config import settings # Importamos la configuración segura
 
 router = APIRouter(
-    prefix="/qr", # Agregamos un prefijo para mejor organización de rutas
+    prefix="/qr",
     tags=["QR y Asistencia"]
 )
 
-# --- Rutas para Códigos QR ---
+# --- Lógica de Tokens de Asistencia ---
 
-@router.post("/qrcodes", response_model=schemas.QrCode) # 👈 ¡USAR schemas.QrCode!
-def create_qr(
-    qr: QrCodeCreate,
-    current_user=Depends(get_current_user_with_roles(["profesor"])),
-    db: Session = Depends(get_db)
-):
-    """Crea un registro de QR en la base de datos (metadatos)."""
-    db_qr = QrCode(
-        clase_id=qr.clase_id,
-        qr_hash=qr.qr_hash,
-        fecha_creacion=qr.fecha_creacion,
-        fecha_expiracion=qr.fecha_expiracion,
-        ubicacion_permitida=qr.ubicacion_permitida
-    )
-    db.add(db_qr)
-    db.commit()
-    db.refresh(db_qr)
-    return db_qr
+def create_attendance_token(clase_id: int):
+    """Genera un JWT de corta duración para una clase específica."""
+    expire = datetime.utcnow() + timedelta(minutes=2)  # Expiración muy corta
+    to_encode = {
+        "exp": expire,
+        "sub": str(clase_id),  # Guardamos el ID de la clase
+        "type": "attendance" # Un tipo para diferenciarlo del token de sesión
+    }
+    return jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
 
-@router.post("/generate_qr_img/")
-def generate_qr_img(
-    qr_data: QrCodeCreate,
+
+def verify_attendance_token(token: str) -> int:
+    """Verifica un token de asistencia y devuelve el ID de la clase."""
+    try:
+        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
+        
+        # Verificamos que sea un token de tipo 'attendance'
+        if payload.get("type") != "attendance":
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Tipo de token inválido")
+            
+        clase_id = int(payload.get("sub"))
+        return clase_id
+    except (JWTError, ValueError, TypeError):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Token QR inválido o expirado"
+        )
+
+# --- Rutas (Endpoints) ---
+
+@router.post("/generate/{clase_id}", response_class=StreamingResponse)
+def generate_qr_for_class(
+    clase_id: int,
+    db: Session = Depends(get_db),
     current_user=Depends(get_current_user_with_roles(["profesor"]))
 ):
-    """Genera y retorna la imagen PNG del código QR basado en los datos proporcionados."""
-    # Convertir el esquema Pydantic a un diccionario serializable para el QR
-    qr_json = qr_data.model_dump_json() 
+    """
+    Genera un token de asistencia seguro para una clase y lo devuelve como una imagen QR.
+    Este endpoint es para ser llamado por el profesor.
+    """
+    # Opcional: añadir lógica para verificar que la clase existe y pertenece al profesor.
+    # db_clase = crud.get_clase(db, clase_id) ...
+
+    attendance_token = create_attendance_token(clase_id=clase_id)
     
-    qr_img = qrcode.make(qr_json)
-    buffer = BytesIO() 
-    
-    qr_img = qrcode.make(qr_json)
+    qr_img = qrcode.make(attendance_token)
     buffer = BytesIO()
-    qr_img.save(buffer, format="PNG")
+    qr_img.save(buffer, "PNG")
     buffer.seek(0)
     
     return StreamingResponse(buffer, media_type="image/png")
 
-# --- Rutas para Registro de Asistencia ---
 
-@router.post("/register_attendance/")
-def register_attendance(
-    data: schemas.AsistenciaRequest,
-    current_user=Depends(get_current_user_with_roles(["estudiante"])),
-    db: Session = Depends(get_db)
+@router.post("/register-attendance", status_code=status.HTTP_201_CREATED)
+def register_attendance_with_token(
+    token_data: schemas.AsistenciaToken,
+    db: Session = Depends(get_db),
+    current_user=Depends(get_current_user_with_roles(["estudiante"]))
 ):
-    """Registra la asistencia de un alumno validando el QR y la marca de tiempo."""
+    """
+    Registra la asistencia de un alumno validando un token QR.
+    Este endpoint es para ser llamado por el estudiante al escanear el QR.
+    """
+    # 1. Verificar el token QR para obtener el ID de la clase
+    clase_id = verify_attendance_token(token=token_data.qr_token)
     
-    # 1. Validación de QR (Existencia y Expiración)
-    qr_record = crud.get_qr_code_by_hash(db, qr_hash=data.token_qr)
-    
-    if not qr_record:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, 
-            detail="Código QR inválido o no encontrado."
-        )
-
-    # Convertimos la marca de tiempo del cliente a objeto datetime para la comparación
-    try:
-        data_timestamp_dt = datetime.fromisoformat(data.timestamp.replace('Z', '+00:00'))
-    except ValueError:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, 
-            detail="Formato de timestamp inválido."
-        )
-
-    now = datetime.utcnow()
-    
-    # Comprobar expiración
-    if now > qr_record.fecha_expiracion:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, 
-            detail="El código QR ha expirado. Debe escanear un código nuevo."
-        )
-    
-    # 2. Validación de Tiempo (Ventana de 5 minutos)
-    # Comparamos el 'timestamp' del cliente (ya convertido) contra la hora del servidor (now)
-    if not (now - timedelta(minutes=5) <= data_timestamp_dt <= now + timedelta(minutes=5)):
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, 
-            detail="Tiempo de registro fuera del rango permitido (5 minutos de tolerancia)."
-        )
-    
-    # 3. Creación del esquema AsistenciaCreate para el CRUD
+    # 2. Crear el objeto de asistencia para guardarlo en la DB
     asistencia_schema = schemas.AsistenciaCreate(
-        clase_id=qr_record.clase_id, 
-        alumno_id=current_user.id,
-        timestamp=data_timestamp_dt, # 👈 Usamos el datetime convertido
-        estado=data.estado,
-        token_qr=data.token_qr
+        clase_id=clase_id,
+        alumno_id=current_user.id, # El ID del alumno viene del token de sesión
+        timestamp=datetime.utcnow(),
+        estado="presente", # Puedes definir un estado por defecto
+        token_qr=token_data.qr_token # Guardamos el token para auditoría
     )
     
-    # 4. Llamada a la función CRUD y manejo de errores (Duplicados)
+    # 3. Intentar guardar en la base de datos, manejando duplicados
     try:
         db_asistencia = crud.create_asistencia(db=db, asistencia=asistencia_schema)
     except IntegrityError:
-        # Esto atrapa errores como la violación de restricción de unicidad (ej: estudiante ya registrado)
         db.rollback()
         raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT, 
+            status_code=status.HTTP_409_CONFLICT,
             detail="Ya has registrado asistencia para esta clase."
         )
-    except Exception as e:
+    except Exception:
         db.rollback()
-        print(f"Error desconocido al crear asistencia: {e}")
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, 
-            detail=f"Error inesperado al registrar asistencia."
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Ocurrió un error inesperado al registrar la asistencia."
         )
 
-    return {"message": "Asistencia registrada correctamente", "id": db_asistencia.id}
+    return {"message": "Asistencia registrada correctamente", "asistencia_id": db_asistencia.id}

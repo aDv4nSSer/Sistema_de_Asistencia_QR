@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Boolean,  DateTime, Float, ForeignKey
+from sqlalchemy import Column, Integer, String, Boolean,  DateTime, Float, ForeignKey, UniqueConstraint
 from app.database import Base
 from sqlalchemy.orm import relationship
 
@@ -71,3 +71,4 @@ class Asistencia(Base): # <--- Clase corregida
     timestamp = Column(DateTime, nullable=False)
     estado = Column(String(20), nullable=False)
     token_qr = Column(String(255), nullable=False)
+    __table_args__ = (UniqueConstraint('clase_id', 'alumno_id', name='_clase_alumno_uc'),)

@@ -1,8 +1,13 @@
+# app/database.py
 from sqlalchemy import create_engine
-from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
+from sqlalchemy.ext.declarative import declarative_base
 
-SQLALCHEMY_DATABASE_URL = "postgresql://postgres:54rtGh32@localhost:5432/QR_asistanse_Generator"
+# Importamos nuestra configuración centralizada
+from app.core.config import settings
+
+# 👈 MODIFICACIÓN: La URL ahora viene del objeto settings
+SQLALCHEMY_DATABASE_URL = settings.DATABASE_URL
 
 # Crear motor de conexión
 engine = create_engine(SQLALCHEMY_DATABASE_URL)
