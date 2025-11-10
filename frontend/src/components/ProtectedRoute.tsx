@@ -1,9 +1,12 @@
 import { Navigate, Outlet } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
 
+// --- INICIO DE LA MODIFICACIÓN ---
+// Añadimos 'ti' a la lista de roles permitidos
 interface ProtectedRouteProps {
-  allowedRoles?: ('profesor' | 'estudiante' | 'administrador')[];
+  allowedRoles?: ('profesor' | 'estudiante' | 'administrador' | 'ti')[];
 }
+// --- FIN DE LA MODIFICACIÓN ---
 
 const ProtectedRoute = ({ allowedRoles }: ProtectedRouteProps) => {
   const { isAuthenticated, user } = useAuthStore();
@@ -15,7 +18,7 @@ const ProtectedRoute = ({ allowedRoles }: ProtectedRouteProps) => {
   }
 
   // 2. ¿La ruta requiere roles específicos y el usuario tiene el rol permitido?
-  const isAuthorized = !allowedRoles || allowedRoles.includes(user!.rol);
+  const isAuthorized = !allowedRoles || allowedRoles.includes(user!.rol as any);
 
   if (!isAuthorized) {
     // Si el usuario está logueado pero no tiene el rol, redirigir a una página de "No autorizado".

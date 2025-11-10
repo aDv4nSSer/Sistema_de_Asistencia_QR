@@ -8,16 +8,26 @@ from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.orm import Session
 
 from app.core.config import settings
-from app import crud, database
+# Quitamos 'crud' de esta importación para romper el círculo
+from app import database
 from app.schemas import Usuario
 
+# Definimos todo lo que 'crud.py' podría importar ANTES de nada
 pwd_context = CryptContext(schemes=["argon2"], deprecated="auto")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
 def verify_password(plain_password, hashed_password):
     return pwd_context.verify(plain_password, hashed_password)
 
+def get_password_hash(password: str) -> str:
+    return pwd_context.hash(password)
+
+# --- FIN DE LA SECCIÓN IMPORTANTE ---
+
+
 def authenticate_user(db: Session, email: str, password: str):
+    # Importamos 'crud' aquí dentro
+    from app import crud 
     usuario = crud.get_usuario_por_email(db, email)
     if not usuario or not verify_password(password, usuario.contrasena_hash):
         return None
@@ -31,6 +41,9 @@ def create_access_token(data: dict):
     return jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
 
 def get_current_user(db: Session = Depends(database.get_db), token: str = Depends(oauth2_scheme)):
+    # Importamos 'crud' aquí dentro
+    from app import crud
+    
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="No se pudo validar las credenciales",
@@ -52,7 +65,7 @@ def get_current_user(db: Session = Depends(database.get_db), token: str = Depend
         raise credentials_exception
     return usuario
 
-# --- Lógica de Refresh Token (LO NUEVO) ---
+# --- Lógica de Refresh Token ---
 def create_refresh_token(data: dict):
     to_encode = data.copy()
     expire = datetime.utcnow() + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)
@@ -60,6 +73,9 @@ def create_refresh_token(data: dict):
     return jwt.encode(to_encode, settings.REFRESH_SECRET_KEY, algorithm=settings.ALGORITHM)
 
 def verify_refresh_token(db: Session, token: str) -> Usuario:
+    # Importamos 'crud' aquí dentro
+    from app import crud
+
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Refresh token inválido o expirado"

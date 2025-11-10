@@ -4,14 +4,15 @@ import { jwtDecode } from 'jwt-decode';
 interface User {
   email: string;
   rol: string;
+  id: number;
+  nombre: string; // <-- 1. AÑADE LA PROPIEDAD 'nombre'
 }
 
 interface AuthState {
   accessToken: string | null;
-  refreshToken: string | null; // <-- AÑADIDO: para guardar el refresh token
+  refreshToken: string | null; 
   isAuthenticated: boolean;
   user: User | null;
-  // 👇 CORRECCIÓN: La función ahora espera ambos tokens
   setToken: (accessToken: string, refreshToken: string) => void;
   logout: () => void;
 }
@@ -19,8 +20,9 @@ interface AuthState {
 // Helper para decodificar el token de acceso
 const decodeAccessToken = (token: string): User | null => {
   try {
-    const decoded: { sub: string; rol: string } = jwtDecode(token);
-    return { email: decoded.sub, rol: decoded.rol };
+    // 2. ACTUALIZA LA DECODIFICACIÓN
+    const decoded: { sub: string; rol: string; id: number; nombre: string } = jwtDecode(token);
+    return { email: decoded.sub, rol: decoded.rol, id: decoded.id, nombre: decoded.nombre };
   } catch (error) {
     console.error("Error decodificando el token:", error);
     return null;
@@ -29,7 +31,7 @@ const decodeAccessToken = (token: string): User | null => {
 
 export const useAuthStore = create<AuthState>((set) => ({
   accessToken: null,
-  refreshToken: null, // <-- AÑADIDO: estado inicial
+  refreshToken: null, 
   isAuthenticated: false,
   user: null,
   setToken: (accessToken: string, refreshToken: string) => {
@@ -37,7 +39,7 @@ export const useAuthStore = create<AuthState>((set) => ({
     if (user) {
       set({
         accessToken,
-        refreshToken, // <-- AÑADIDO: guardamos el refresh token
+        refreshToken, 
         isAuthenticated: true,
         user,
       });
@@ -46,7 +48,7 @@ export const useAuthStore = create<AuthState>((set) => ({
   logout: () => {
     set({
       accessToken: null,
-      refreshToken: null, // <-- AÑADIDO: limpiar al salir
+      refreshToken: null, 
       isAuthenticated: false,
       user: null,
     });

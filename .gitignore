@@ -8,6 +8,7 @@ venv/
 env/
 __pycache__/
 *.pyc
+*.pem
 
 # Dependencias del Frontend (Node.js)
 node_modules/

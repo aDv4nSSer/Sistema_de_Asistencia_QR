@@ -2,10 +2,13 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
 import {
-  Container, Box, Avatar, Typography, TextField, Button, CircularProgress, Alert, Paper
+  Container, Box, Typography, TextField, Button, 
+  CircularProgress, Alert, Paper
 } from '@mui/material';
-import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import apiClient from '../services/apiClient';
+import logoUni from '../assets/logo-uni.png'; 
+// --- 👇 CAMBIO 1: Importar la imagen de fondo ---
+import backgroundImage from '../assets/universidad-ubb.jpg'; // Asume que la guardaste en assets
 
 const LoginPage = () => {
   const [email, setEmail] = useState('');
@@ -36,6 +39,7 @@ const LoginPage = () => {
   };
 
   return (
+    // --- 👇 CAMBIO 2: Estilos para el fondo con overlay ---
     <Box
       sx={{
         display: 'flex',
@@ -43,25 +47,41 @@ const LoginPage = () => {
         alignItems: 'center',
         justifyContent: 'center',
         minHeight: '100vh',
-        bgcolor: 'background.default',
+        // Fondo de imagen
+        backgroundImage: `linear-gradient(rgba(0, 51, 102, 0.7), rgba(0, 51, 102, 0.7)), url(${backgroundImage})`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundAttachment: 'fixed', // Para que la imagen no se mueva con el scroll
+        backgroundRepeat: 'no-repeat',
+        // --- 👆 FIN CAMBIO 2 ---
       }}
     >
       <Container component="main" maxWidth="xs">
         <Paper elevation={6} sx={{
-          // 👇 CORRECCIÓN: Hemos eliminado 'marginTop: 8' para un centrado perfecto
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
           padding: 4,
+          borderRadius: 3 // Borde redondeado
         }}>
-          <Avatar sx={{ m: 1, bgcolor: 'primary.main' }}>
-            <LockOutlinedIcon />
-          </Avatar>
-          <Typography component="h1" variant="h5">
+
+          <Box
+            component="img"
+            src={logoUni}
+            alt="Logo Universidad"
+            sx={{
+              width: '100%',
+              maxWidth: 250, 
+              height: 'auto',
+              mb: 2, 
+            }}
+          />
+          
+          <Typography component="h1" variant="h5" sx={{mb: 1}}>
             Iniciar Sesión
           </Typography>
-          <Box component="form" onSubmit={handleSubmit} sx={{ mt: 1 }}>
+          <Box component="form" onSubmit={handleSubmit} sx={{ mt: 1, width: '100%' }}>
             <TextField
               margin="normal"
               required
@@ -73,6 +93,13 @@ const LoginPage = () => {
               autoFocus
               value={email}
               onChange={(e) => setEmail(e.target.value)}
+              // Añadir estilos para el input si es necesario (opcional)
+              InputLabelProps={{
+                style: { color: '#022873' }, // Color de la etiqueta
+              }}
+              InputProps={{
+                style: { color: '#000000' }, // Color del texto de entrada
+              }}
             />
             <TextField
               margin="normal"
@@ -85,17 +112,34 @@ const LoginPage = () => {
               autoComplete="current-password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
+              // Añadir estilos para el input si es necesario (opcional)
+              InputLabelProps={{
+                style: { color: '#022873' },
+              }}
+              InputProps={{
+                style: { color: '#000000' },
+              }}
             />
             {error && <Alert severity="error" sx={{ width: '100%', mt: 2 }}>{error}</Alert>}
+            
             <Button
               type="submit"
               fullWidth
               variant="contained"
-              sx={{ mt: 3, mb: 2 }}
+              sx={{ 
+                mt: 3, 
+                mb: 2,
+                backgroundColor: '#022873', 
+                color: '#FFFFFF',
+                '&:hover': {
+                  backgroundColor: '#023E73', 
+                }
+              }}
               disabled={loading}
             >
               {loading ? <CircularProgress size={24} color="inherit" /> : 'Ingresar'}
             </Button>
+            
           </Box>
         </Paper>
       </Container>

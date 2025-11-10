@@ -2,70 +2,91 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
-from datetime import datetime, timedelta
+from datetime import datetime
 from io import BytesIO
 import qrcode
-from jose import JWTError, jwt
+import math 
 
-# Importaciones de la aplicación
-from app import schemas, crud
+from app import schemas, crud, models
 from app.database import get_db
 from app.auth_utils import get_current_user_with_roles
-from app.core.config import settings # Importamos la configuración segura
 
 router = APIRouter(
     prefix="/qr",
     tags=["QR y Asistencia"]
 )
 
-# --- Lógica de Tokens de Asistencia ---
+# --- Constantes de Geolocalización ---
+UBICACION_UNIVERSIDAD = {
+    "lat": -33.4671903,
+    "lng": -70.6598575
+}
+RADIO_PERMITIDO_METROS = 500 
 
-def create_attendance_token(clase_id: int):
-    """Genera un JWT de corta duración para una clase específica."""
-    expire = datetime.utcnow() + timedelta(minutes=2)  # Expiración muy corta
-    to_encode = {
-        "exp": expire,
-        "sub": str(clase_id),  # Guardamos el ID de la clase
-        "type": "attendance" # Un tipo para diferenciarlo del token de sesión
-    }
-    return jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
+def calcular_distancia(lat1, lon1, lat2, lon2):
+    R = 6371000
+    phi_1 = math.radians(lat1)
+    phi_2 = math.radians(lat2)
+    delta_phi = math.radians(lat2 - lat1)
+    delta_lambda = math.radians(lon2 - lon1)
+    a = math.sin(delta_phi / 2.0)**2 + \
+        math.cos(phi_1) * math.cos(phi_2) * \
+        math.sin(delta_lambda / 2.0)**2
+    c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
+    distancia = R * c  
+    return distancia
 
+# --- Lógica de Tokens (MODIFICADA) ---
 
-def verify_attendance_token(token: str) -> int:
-    """Verifica un token de asistencia y devuelve el ID de la clase."""
-    try:
-        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
-        
-        # Verificamos que sea un token de tipo 'attendance'
-        if payload.get("type") != "attendance":
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Tipo de token inválido")
-            
-        clase_id = int(payload.get("sub"))
-        return clase_id
-    except (JWTError, ValueError, TypeError):
+def verificar_token_uuid(db: Session, token_uuid: str) -> models.TokenAsistencia:
+    """
+    Verifica un token UUID de la base de datos.
+    Si es válido, devuelve el objeto token (con la sesion y asignatura precargadas).
+    Si no, lanza una excepción.
+    """
+    # Usamos la función CRUD que precarga las relaciones
+    db_token = crud.get_token_asistencia_por_uuid(db, token=token_uuid)
+
+    if not db_token:
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Token QR inválido o expirado"
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Código QR no válido o ya fue utilizado."
         )
 
-# --- Rutas (Endpoints) ---
+    if datetime.utcnow() > db_token.fecha_expiracion:
+        crud.borrar_token_asistencia(db, db_token.id)
+        raise HTTPException(
+            status_code=status.HTTP_410_GONE,
+            detail="Código QR ha expirado."
+        )
+    
+    return db_token
 
-@router.post("/generate/{clase_id}", response_class=StreamingResponse)
-def generate_qr_for_class(
-    clase_id: int,
+# --- Rutas (Endpoints) (MODIFICADO) ---
+
+@router.post("/generate/{sesion_id}", response_class=StreamingResponse)
+def generate_qr_for_sesion(
+    sesion_id: int,
     db: Session = Depends(get_db),
     current_user=Depends(get_current_user_with_roles(["profesor"]))
 ):
     """
-    Genera un token de asistencia seguro para una clase y lo devuelve como una imagen QR.
-    Este endpoint es para ser llamado por el profesor.
+    Genera un token UUID de asistencia para una SESIÓN de clase específica.
     """
-    # Opcional: añadir lógica para verificar que la clase existe y pertenece al profesor.
-    # db_clase = crud.get_clase(db, clase_id) ...
-
-    attendance_token = create_attendance_token(clase_id=clase_id)
+    db_sesion = crud.get_sesion_clase_por_id(db, sesion_id)
+    if not db_sesion:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Sesión de clase no encontrada")
     
-    qr_img = qrcode.make(attendance_token)
+    # Verificación de seguridad
+    db_asignatura = crud.get_asignatura_por_id(db, db_sesion.asignatura_id)
+    if db_asignatura.profesor_id != current_user.id:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="No tienes permiso sobre esta asignatura")
+    
+    # 1. Creamos el token UUID en la base de datos
+    db_token = crud.crear_token_asistencia(db, sesion_id=sesion_id, expira_en_minutos=2)
+    
+    # 2. Creamos el QR usando el string del UUID
+    qr_img = qrcode.make(db_token.token)
     buffer = BytesIO()
     qr_img.save(buffer, "PNG")
     buffer.seek(0)
@@ -75,34 +96,65 @@ def generate_qr_for_class(
 
 @router.post("/register-attendance", status_code=status.HTTP_201_CREATED)
 def register_attendance_with_token(
-    token_data: schemas.AsistenciaToken,
+    token_data: schemas.AsistenciaToken, 
     db: Session = Depends(get_db),
     current_user=Depends(get_current_user_with_roles(["estudiante"]))
 ):
     """
-    Registra la asistencia de un alumno validando un token QR.
-    Este endpoint es para ser llamado por el estudiante al escanear el QR.
+    Registra la asistencia de un alumno validando token, ubicación e inscripción.
     """
-    # 1. Verificar el token QR para obtener el ID de la clase
-    clase_id = verify_attendance_token(token=token_data.qr_token)
     
-    # 2. Crear el objeto de asistencia para guardarlo en la DB
+    # 1. Verificar la ubicación
+    distancia = calcular_distancia(
+        UBICACION_UNIVERSIDAD["lat"],
+        UBICACION_UNIVERSIDAD["lng"],
+        token_data.lat,
+        token_data.lng
+    )
+    if distancia > RADIO_PERMITIDO_METROS:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=f"Estás a {int(distancia)} metros del campus. Debes estar a menos de {RADIO_PERMITIDO_METROS}m para registrar tu asistencia."
+        )
+
+    # 2. Verificar el token QR (UUID)
+    db_token = verificar_token_uuid(db, token_uuid=token_data.qr_token)
+    
+    # --- 3. VERIFICAR INSCRIPCIÓN (LÓGICA MODIFICADA) ---
+    # El token nos da la sesión, la sesión nos da la asignatura.
+    asignatura_id = db_token.sesion_clase.asignatura_id
+    
+    esta_inscrito = crud.verificar_inscripcion(db, alumno_id=current_user.id, asignatura_id=asignatura_id)
+    
+    if not esta_inscrito:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="No estás inscrito(a) en esta asignatura. No puedes registrar asistencia."
+        )
+    
+    # 4. Crear el objeto de asistencia
     asistencia_schema = schemas.AsistenciaCreate(
-        clase_id=clase_id,
-        alumno_id=current_user.id, # El ID del alumno viene del token de sesión
+        sesion_clase_id=db_token.sesion_clase_id, # <-- MODIFICADO
+        alumno_id=current_user.id, 
         timestamp=datetime.utcnow(),
-        estado="presente", # Puedes definir un estado por defecto
-        token_qr=token_data.qr_token # Guardamos el token para auditoría
+        estado="presente", 
+        token_qr=token_data.qr_token,
+        lat=token_data.lat,
+        lng=token_data.lng
     )
     
-    # 3. Intentar guardar en la base de datos, manejando duplicados
+    # 5. Intentar guardar en la base de datos
     try:
         db_asistencia = crud.create_asistencia(db=db, asistencia=asistencia_schema)
+        
+        # 6. Borramos el token para que no se pueda reusar
+        crud.borrar_token_asistencia(db, db_token.id)
+
     except IntegrityError:
         db.rollback()
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
-            detail="Ya has registrado asistencia para esta clase."
+            detail="Ya has registrado asistencia para esta sesión."
         )
     except Exception:
         db.rollback()

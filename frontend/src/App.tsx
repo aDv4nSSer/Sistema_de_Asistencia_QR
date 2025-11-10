@@ -4,8 +4,17 @@ import DashboardPage from './pages/DashboardPage';
 import UnauthorizedPage from './pages/UnauthorizedPage';
 import ProtectedRoute from './components/ProtectedRoute';
 import MainLayout from './components/layout/MainLayout';
-import ProfessorClassesPage from './pages/ProfessorClassesPage'; // <-- Importamos la nueva página
+import StudentScannerPage from './pages/StudentScannerPage';
+import StudentHistoryPage from './pages/StudentHistoryPage';
 import { useAuthStore } from './store/authStore';
+
+// --- Archivos renombrados y nuevos ---
+import ProfessorAsignaturasPage from './pages/ProfessorAsignaturasPage';
+import ProfessorHistoryPage from './pages/ProfessorHistoryPage'; 
+import ProfessorAttendancePage from './pages/ProfessorAttendancePage';
+import StudentAsignaturasPage from './pages/StudentAsignaturasPage';
+import AdminPage from './pages/AdminPage';
+import AdminAsignaturaDetailPage from './pages/AdminAsignaturaDetailPage';
 
 function App() {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
@@ -22,15 +31,29 @@ function App() {
 
         {/* Rutas Protegidas con Layout */}
         <Route element={<ProtectedRoute />}>
-          <Route element={<MainLayout />}> {/* <-- Envolvemos las rutas con el Layout */}
+          <Route element={<MainLayout />}>
             <Route path="/dashboard" element={<DashboardPage />} />
 
-            {/* Rutas específicas para el Profesor */}
+            {/* --- Rutas de Profesor (MODIFICADO) --- */}
             <Route element={<ProtectedRoute allowedRoles={['profesor']} />}>
-              <Route path="/profesor/clases" element={<ProfessorClassesPage />} />
+              <Route path="/profesor/asignaturas" element={<ProfessorAsignaturasPage />} />
+              <Route path="/profesor/historial" element={<ProfessorHistoryPage />} />
+              <Route path="/profesor/sesion/:sesionId/asistencia" element={<ProfessorAttendancePage/>} />
             </Route>
 
-            {/* Aquí irían las rutas para el Alumno, etc. */}
+            {/* --- Rutas de Estudiante (MODIFICADO) --- */}
+            <Route element={<ProtectedRoute allowedRoles={['estudiante']} />}>
+              <Route path="/estudiante/asignaturas" element={<StudentAsignaturasPage />} /> 
+              <Route path="/estudiante/asistencia" element={<StudentScannerPage />} />
+              <Route path="/estudiante/historial" element={<StudentHistoryPage />} />
+            </Route>
+            
+            {/* --- Rutas de Admin/TI (MODIFICADO) --- */}
+            <Route element={<ProtectedRoute allowedRoles={['administrador', 'ti']} />}>
+              <Route path="/admin/gestion" element={<AdminPage />} />
+              <Route path="/admin/asignatura/:asignaturaId/alumnos" element={<AdminAsignaturaDetailPage />} />
+            </Route>
+
           </Route>
         </Route>
 

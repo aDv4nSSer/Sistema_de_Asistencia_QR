@@ -7,12 +7,21 @@ interface QrScannerProps {
 
 const QrScanner = ({ onScanSuccess }: QrScannerProps) => {
   const { ref } = useZxing({
-    // 👇 CORRECCIÓN: 'onResult' se cambia por 'onDecodeResult'
+    // 👇 === LA MODIFICACIÓN ESTÁ AQUÍ ===
+    // Le pedimos al navegador que use la cámara trasera (la que apunta al "entorno")
+    constraints: {
+      video: {
+        facingMode: 'environment'
+      }
+    },
+    // ======================================
+
     onDecodeResult(result) {
       onScanSuccess(result.getText());
     },
     onError(error) {
       console.error('Error en el scanner:', error);
+      // Opcional: podrías mostrar un mensaje de error al usuario aquí
     },
   });
 
