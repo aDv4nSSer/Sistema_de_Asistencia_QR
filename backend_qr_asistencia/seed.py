@@ -1,6 +1,7 @@
 import os
 import sys
 from dotenv import load_dotenv, find_dotenv
+import time # Para el contador de seguridad
 
 # 1. Añadir el directorio del proyecto al path de Python
 script_dir = os.path.dirname(os.path.abspath(__file__))
@@ -18,6 +19,7 @@ print("Cargando variables de entorno...")
 
 # 3. Importar los componentes de la app
 try:
+    # --- 👇 MODIFICADO: Importamos Base y engine ---
     from app.database import engine, Base, SessionLocal
     from app.models import Usuario
     from app import schemas
@@ -37,9 +39,35 @@ except Exception as e:
 def seed_database():
     print("Iniciando el proceso de siembra (seed)...")
     
-    # 5. Crear todas las tablas (en una BBDD vacía)
+    # --- 👇 AÑADIDO: Lógica de Reseteo ---
+    # Comprueba si se pasó el argumento '--reset'
+    if '--reset' in sys.argv:
+        print("\n--- ¡ADVERTENCIA MÁXIMA! ---")
+        print("Argumento '--reset' detectado.")
+        print("Esto eliminará TODAS las tablas y TODOS los datos de la base de datos.")
+        print("Se usará para aplicar cambios estructurales (de models.py).")
+        print("-----------------------------")
+        
+        # Contador de seguridad para cancelar (Ctrl+C)
+        try:
+            for i in range(5, 0, -1):
+                print(f"RESETEO TOTAL en {i} segundos... (Presiona Ctrl+C para cancelar)", end="\r")
+                time.sleep(1)
+        except KeyboardInterrupt:
+            print("\nReseteo cancelado por el usuario.")
+            db.close()
+            exit()
+        
+        print("\nIniciando borrado total (DROP ALL)...")
+        Base.metadata.drop_all(bind=engine)
+        print("... Tablas borradas.")
+    # --- 👆 FIN DE LA MODIFICACIÓN ---
+
+    # 5. Crear todas las tablas
     try:
-        print("Creando tablas nuevas...")
+        print("Creando tablas (CREATE ALL)...")
+        # Esto creará las tablas (si se borraron) o
+        # las creará si es la primera vez (si no se usó --reset)
         Base.metadata.create_all(bind=engine)
         print("Tablas creadas exitosamente.")
     except Exception as e:
@@ -51,14 +79,14 @@ def seed_database():
         schemas.UsuarioCreate(
             nombre="Usuario TI",
             email="ti@test.com",
-            contrasena="ti123",
+            contrasena="ti123", # Asegúrate que coincida con tu schema
             rol="ti",
             activo=True
         ),
         schemas.UsuarioCreate(
             nombre="Usuario Administrador",
             email="admin@test.com",
-            contrasena="admin123",
+            contrasena="admin123", # Asegúrate que coincida con tu schema
             rol="administrador",
             activo=True
         )

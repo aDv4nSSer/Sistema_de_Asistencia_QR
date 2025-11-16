@@ -11,6 +11,11 @@ from app import schemas, crud, models
 from app.database import get_db
 from app.auth_utils import get_current_user_with_roles
 
+# --- 👇 AÑADIDO (1/3): IMPORT DE ZONA HORARIA ---
+import pytz
+TZ_CHILE = pytz.timezone('America/Santiago')
+# --- 👆 FIN DE LA MODIFICACIÓN ---
+
 router = APIRouter(
     prefix="/qr",
     tags=["QR y Asistencia"]
@@ -18,8 +23,8 @@ router = APIRouter(
 
 # --- Constantes de Geolocalización ---
 UBICACION_UNIVERSIDAD = {
-    "lat": -33.4671903,
-    "lng": -70.6598575
+    "lat": -34.4777723,
+    "lng": -71.4765761
 }
 RADIO_PERMITIDO_METROS = 500 
 
@@ -53,7 +58,9 @@ def verificar_token_uuid(db: Session, token_uuid: str) -> models.TokenAsistencia
             detail="Código QR no válido o ya fue utilizado."
         )
 
-    if datetime.utcnow() > db_token.fecha_expiracion:
+    # --- 👇 MODIFICADO (2/3): USA HORA LOCAL ---
+    if datetime.now(TZ_CHILE) > db_token.fecha_expiracion:
+    # --- 👆 FIN DE LA MODIFICACIÓN ---
         crud.borrar_token_asistencia(db, db_token.id)
         raise HTTPException(
             status_code=status.HTTP_410_GONE,
@@ -136,7 +143,11 @@ def register_attendance_with_token(
     asistencia_schema = schemas.AsistenciaCreate(
         sesion_clase_id=db_token.sesion_clase_id, # <-- MODIFICADO
         alumno_id=current_user.id, 
-        timestamp=datetime.utcnow(),
+        
+        # --- 👇 MODIFICADO (3/3): USA HORA LOCAL ---
+        timestamp=datetime.now(TZ_CHILE),
+        # --- 👆 FIN DE LA MODIFICACIÓN ---
+        
         estado="presente", 
         token_qr=token_data.qr_token,
         lat=token_data.lat,

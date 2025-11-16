@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from app import schemas, crud, database, models
 from app.auth_utils import get_current_user_with_roles
-from typing import List, Any # <-- AÑADIDO
+from typing import List, Any 
 
 router = APIRouter(
     prefix="/gestion",
@@ -75,13 +75,47 @@ def desinscribir_alumno(
     
     return {"message": "Alumno desinscrito correctamente"}
 
+# --- 👇 AÑADIDO: GESTIÓN DE HORARIOS (Rol: TI o Admin) ---
+
+@router.post("/horarios/", response_model=schemas.Horario, status_code=status.HTTP_201_CREATED)
+def crear_horario_asignatura(
+    horario: schemas.HorarioCreate,
+    db: Session = Depends(get_db),
+    current_user: models.Usuario = Depends(get_current_user_with_roles(["ti", "administrador"]))
+):
+    """
+    (TI/Admin) Asigna un nuevo horario (día/hora) a una asignatura.
+    """
+    db_asignatura = crud.get_asignatura_por_id(db, horario.asignatura_id)
+    if not db_asignatura:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Asignatura no encontrada")
+    
+    nuevo_horario = crud.crear_horario(db, horario)
+    return nuevo_horario
+
+@router.delete("/horarios/{horario_id}", status_code=status.HTTP_200_OK)
+def eliminar_horario_asignatura(
+    horario_id: int,
+    db: Session = Depends(get_db),
+    current_user: models.Usuario = Depends(get_current_user_with_roles(["ti", "administrador"]))
+):
+    """
+    (TI/Admin) Elimina un horario de una asignatura.
+    """
+    db_horario = crud.delete_horario(db, horario_id)
+    if not db_horario:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Horario no encontrado")
+    
+    return {"message": "Horario eliminado correctamente"}
+# --- 👆 FIN DE LA MODIFICACIÓN ---
+
+
 # --- GESTIÓN DE REPORTES (Rol: Admin) ---
 
 @router.get("/asignatura/{asignatura_id}/reporte-asistencia", response_model=Any)
 def reporte_asistencia_por_asignatura(
     asignatura_id: int,
     db: Session = Depends(get_db),
-    # --- 👇 MODIFICADO ---
     current_user: models.Usuario = Depends(get_current_user_with_roles(["administrador", "profesor"]))
 ):
     """
@@ -92,10 +126,8 @@ def reporte_asistencia_por_asignatura(
     if not db_asignatura:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Asignatura no encontrada")
         
-    # --- 👇 AÑADIDO (Seguridad para Profesor) ---
     if current_user.rol == "profesor" and db_asignatura.profesor_id != current_user.id:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="No tienes permiso sobre esta asignatura")
-    # --- 👆 FIN ---
         
     reporte = crud.get_reporte_asistencia_asignatura(db, asignatura_id=asignatura_id)
     return reporte

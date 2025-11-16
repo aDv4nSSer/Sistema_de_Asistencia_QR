@@ -1,8 +1,18 @@
-from sqlalchemy import Column, Integer, String, Boolean,  DateTime, Float, ForeignKey, UniqueConstraint, Table
+from sqlalchemy import Column, Integer, String, Boolean,  DateTime, Float, ForeignKey, UniqueConstraint, Table, Enum
 from app.database import Base
 from sqlalchemy.orm import relationship
 import uuid 
 from datetime import datetime 
+import pytz
+import enum # <-- Importado para el Enum
+
+# --- LÓGICA DE ZONA HORARIA ---
+TZ_CHILE = pytz.timezone('America/Santiago')
+def get_local_time():
+    """Devuelve la hora local actual de Chile."""
+    return datetime.now(TZ_CHILE)
+# --- FIN DE LA LÓGICA ---
+
 
 # --- 1. TABLA DE ASOCIACIÓN ---
 inscripciones_alumnos = Table(
@@ -23,7 +33,6 @@ class Usuario(Base):
     rol = Column(String(20), nullable=False) 
     activo = Column(Boolean, default=True)
     
-    # --- CORREGIDO ---
     asignaturas_impartidas = relationship("Asignatura", back_populates="profesor") 
     asistencias_alumno = relationship("Asistencia", back_populates="alumno")
     asignaturas_inscritas = relationship(
@@ -31,6 +40,27 @@ class Usuario(Base):
         secondary=inscripciones_alumnos,
         back_populates="alumnos_inscritos"
     )
+
+# --- 👇 AÑADIDO: Nuevo Modelo Horario ---
+class DiaSemana(enum.Enum):
+    lunes = "Lunes"
+    martes = "Martes"
+    miercoles = "Miércoles"
+    jueves = "Jueves"
+    viernes = "Viernes"
+    sabado = "Sábado"
+    domingo = "Domingo"
+
+class Horario(Base):
+    __tablename__ = "horarios"
+    id = Column(Integer, primary_key=True, index=True)
+    asignatura_id = Column(Integer, ForeignKey("asignaturas.id"), nullable=False)
+    dia_semana = Column(Enum(DiaSemana), nullable=False)
+    hora_inicio = Column(String(5), nullable=False) # Formato "HH:MM"
+    hora_fin = Column(String(5), nullable=False)   # Formato "HH:MM"
+    
+    asignatura = relationship("Asignatura", back_populates="horarios")
+# --- 👆 FIN DE LA MODIFICACIÓN ---
 
 
 class Asignatura(Base): 
@@ -40,7 +70,6 @@ class Asignatura(Base):
     profesor_id = Column(Integer, ForeignKey("usuarios.id"), nullable=False)
     codigo = Column(String(20), nullable=True, unique=True)
 
-    # --- CORREGIDO ---
     profesor = relationship("Usuario", back_populates="asignaturas_impartidas") 
     alumnos_inscritos = relationship(
         "Usuario",
@@ -48,18 +77,24 @@ class Asignatura(Base):
         back_populates="asignaturas_inscritas"
     )
     sesiones_clase = relationship("SesionClase", back_populates="asignatura")
+    
+    # --- 👇 AÑADIDO: Relación con Horario ---
+    horarios = relationship("Horario", back_populates="asignatura")
+    # --- 👆 FIN DE LA MODIFICACIÓN ---
 
 
 class SesionClase(Base):
     __tablename__ = "sesiones_clase"
     id = Column(Integer, primary_key=True, index=True)
     asignatura_id = Column(Integer, ForeignKey("asignaturas.id"), nullable=False)
-    fecha = Column(DateTime, nullable=False, default=datetime.utcnow)
+    
+    # --- MODIFICADO: Añadido timezone=True ---
+    fecha = Column(DateTime(timezone=True), nullable=False, default=get_local_time)
+    
     hora_inicio = Column(String(10), nullable=True)
     hora_fin = Column(String(10), nullable=True)
     ubicacion = Column(String(100), nullable=True)
 
-    # --- CORREGIDO ---
     asignatura = relationship("Asignatura", back_populates="sesiones_clase")
     asistencias = relationship("Asistencia", back_populates="sesion_clase")
     token_qr = relationship("TokenAsistencia", back_populates="sesion_clase", uselist=False)
@@ -70,7 +105,10 @@ class Asistencia(Base):
     id = Column(Integer, primary_key=True, index=True)
     sesion_clase_id = Column(Integer, ForeignKey("sesiones_clase.id"), nullable=False)
     alumno_id = Column(Integer, ForeignKey("usuarios.id"), nullable=False)
-    timestamp = Column(DateTime, nullable=False)
+    
+    # --- MODIFICADO: Añadido timezone=True ---
+    timestamp = Column(DateTime(timezone=True), nullable=False)
+    
     estado = Column(String(20), nullable=False)
     token_qr = Column(String(255), nullable=False)
     lat = Column(Float, nullable=True) 
@@ -78,7 +116,6 @@ class Asistencia(Base):
 
     __table_args__ = (UniqueConstraint('sesion_clase_id', 'alumno_id', name='_sesion_alumno_uc'),)
 
-    # --- CORREGIDO ---
     alumno = relationship("Usuario", back_populates="asistencias_alumno")
     sesion_clase = relationship("SesionClase", back_populates="asistencias")
 
@@ -92,10 +129,13 @@ class TokenAsistencia(Base):
     id = Column(Integer, primary_key=True, index=True)
     token = Column(String(36), unique=True, index=True, default=generate_uuid)
     sesion_clase_id = Column(Integer, ForeignKey("sesiones_clase.id"), nullable=False, unique=True)
-    fecha_expiracion = Column(DateTime, nullable=False)
-    creado_en = Column(DateTime, default=datetime.utcnow)
     
-    # --- CORREGIDO ---
+    # --- MODIFICADO: Añadido timezone=True ---
+    fecha_expiracion = Column(DateTime(timezone=True), nullable=False)
+    
+    # --- MODIFICADO: Añadido timezone=True ---
+    creado_en = Column(DateTime(timezone=True), default=get_local_time)
+    
     sesion_clase = relationship("SesionClase", back_populates="token_qr")
 
 
@@ -109,7 +149,6 @@ class Session(Base):
     lat = Column(Float)
     lng = Column(Float)
     radius_meters = Column(Float, default=50)
-    # --- CORREGIDO ---
     attendances = relationship("Attendance", back_populates="session")
 
 class Attendance(Base):
@@ -120,5 +159,4 @@ class Attendance(Base):
     timestamp = Column(DateTime)
     lat = Column(Float)
     lng = Column(Float)
-    # --- CORREGIDO ---
     session = relationship("Session", back_populates="attendances")

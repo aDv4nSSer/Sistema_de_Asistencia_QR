@@ -2,6 +2,7 @@ from pydantic import BaseModel, EmailStr, Field
 from datetime import datetime, date
 import uuid 
 from typing import List, Optional
+from app.models import DiaSemana # <-- AÑADIDO
 
 # --- 1. Schemas de Usuario (Sin cambios) ---
 
@@ -41,6 +42,23 @@ class Token(BaseModel):
     access_token: str
     token_type: str
 
+# --- 👇 AÑADIDO (1/2): Nuevos Schemas de Horario ---
+class HorarioBase(BaseModel):
+    dia_semana: DiaSemana
+    hora_inicio: str # Ej: "09:00"
+    hora_fin: str   # Ej: "10:30"
+
+class HorarioCreate(HorarioBase):
+    asignatura_id: int
+
+class Horario(HorarioBase):
+    id: int
+    asignatura_id: int
+    
+    class Config:
+        from_attributes = True 
+# --- 👆 FIN DE LA MODIFICACIÓN ---
+
 
 # --- 2. Schemas de Asignatura (Clase -> Asignatura) ---
 
@@ -53,6 +71,10 @@ class Asignatura(AsignaturaCreate):
     id: int 
     profesor: Optional[UsuarioInfo] = None
     alumnos_inscritos: List[UsuarioInfo] = []
+    
+    # --- 👇 AÑADIDO (2/2): Incluir horarios en el schema ---
+    horarios: List[Horario] = []
+    # --- 👆 FIN DE LA MODIFICACIÓN ---
     
     class Config:
         from_attributes = True 
@@ -170,3 +192,19 @@ class BulkUserCreateResponse(BaseModel):
     exitosos: int
     fallidos: int
     detalles_fallidos: List[str]
+
+# --- 👇 NUEVOS SCHEMAS AÑADIDOS ---
+
+# Schema para la petición del profesor al justificar
+class AsistenciaManualCreate(BaseModel):
+    sesion_clase_id: int
+    alumno_id: int
+    estado: str = "presente" # El profesor puede marcar como "presente" o "justificado"
+
+# Schema para la respuesta que verá el profesor (lista completa)
+class AsistenciaDetalladaAlumno(UsuarioInfo):
+    estado: str # "presente", "ausente", "justificado"
+    timestamp: Optional[datetime] = None
+    asistencia_id: Optional[int] = None
+    class Config:
+        from_attributes = True

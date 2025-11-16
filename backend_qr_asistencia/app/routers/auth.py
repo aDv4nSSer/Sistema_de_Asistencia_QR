@@ -1,17 +1,25 @@
-from fastapi import APIRouter, Depends, HTTPException, status, Response, Cookie
+from fastapi import APIRouter, Depends, HTTPException, status, Response, Cookie, Request # <-- MODIFICADO
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 from app import database, schemas, auth_utils 
+
+# --- 👇 AÑADIDO ---
+from app.limiter import limiter # Importamos nuestra instancia
+# --- 👆 FIN DE LA MODIFICACIÓN ---
 
 router = APIRouter(
     tags=["Autenticación"]
 )
 
 @router.post("/token", response_model=schemas.Token)
+# --- 👇 MODIFICADO (1/2): APLICAMOS EL LÍMITE ---
+@limiter.limit("5/minute") # Límite: 5 intentos por minuto por IP
 def login_for_access_token(
     response: Response,
+    request: Request, # <-- AÑADIDO: 'request' es necesario para el limiter
     form_data: OAuth2PasswordRequestForm = Depends(),
     db: Session = Depends(database.get_db)
+    # --- 👆 FIN DE LA MODIFICACIÓN (1/2) ---
 ):
     """
     Endpoint de inicio de sesión.
@@ -23,12 +31,9 @@ def login_for_access_token(
             detail="Usuario o contraseña incorrectos"
         )
     
-    # --- 👇 MODIFICACIÓN (Paso 1.1) ---
-    # ¡Añadimos "nombre": usuario.nombre al token!
     access_token = auth_utils.create_access_token(
         data={"sub": usuario.email, "rol": usuario.rol, "id": usuario.id, "nombre": usuario.nombre}
     )
-    # --- 👆 FIN DE LA MODIFICACIÓN ---
 
     refresh_token = auth_utils.create_refresh_token(
         data={"sub": usuario.email}
@@ -62,11 +67,8 @@ def refresh_access_token(
         
     usuario = auth_utils.verify_refresh_token(db, refresh_token) 
     
-    # --- 👇 MODIFICACIÓN (Paso 1.2) ---
-    # ¡Añadimos "nombre": usuario.nombre también al refrescar!
     new_access_token = auth_utils.create_access_token(
         data={"sub": usuario.email, "rol": usuario.rol, "id": usuario.id, "nombre": usuario.nombre}
     )
-    # --- 👆 FIN DE LA MODIFICACIÓN ---
     
     return {"access_token": new_access_token, "token_type": "bearer"}

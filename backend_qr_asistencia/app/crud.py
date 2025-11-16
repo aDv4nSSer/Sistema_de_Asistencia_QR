@@ -1,12 +1,17 @@
 from typing import List
 from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import func
+# --- 👇 MODIFICADO: Importamos los nuevos modelos/schemas ---
 from app import models, schemas
+from app.models import Horario, DiaSemana
+# --- 👆 FIN DE LA MODIFICACIÓN ---
 from datetime import datetime, timedelta
 from app.auth_utils import get_password_hash
+import pytz
 
-# --- 1. CRUD de Usuarios (MODIFICADO) ---
+TZ_CHILE = pytz.timezone('America/Santiago')
 
+# --- 1. CRUD de Usuarios (Sin cambios) ---
 def get_usuario(db: Session, usuario_id: int):
     return db.query(models.Usuario).filter(models.Usuario.id == usuario_id).first()
 
@@ -48,7 +53,6 @@ def delete_usuario(db: Session, usuario_id: int):
     db_usuario = get_usuario(db, usuario_id)
     if not db_usuario:
         return None
-    # Desactivar es más seguro que borrar
     db_usuario.activo = False
     db.commit()
     db.refresh(db_usuario)
@@ -60,14 +64,12 @@ def crear_usuarios_bulk(db: Session, usuarios: List[schemas.UsuarioCreate]):
     detalles_fallidos = []
 
     for user_schema in usuarios:
-        # 1. Verificar si el email ya existe
         db_user = get_usuario_por_email(db, email=user_schema.email)
         if db_user:
             detalles_fallidos.append(f"Email ya existe: {user_schema.email}")
             fallidos += 1
-            continue # Saltar al siguiente usuario
+            continue 
             
-        # 2. Si no existe, hashear contraseña y crear
         try:
             hashed_password = get_password_hash(user_schema.contrasena)
             db_usuario = models.Usuario(
@@ -80,35 +82,39 @@ def crear_usuarios_bulk(db: Session, usuarios: List[schemas.UsuarioCreate]):
             db.add(db_usuario)
             exitosos += 1
         except Exception as e:
-            # Capturar cualquier otro error (ej. rol inválido, etc.)
             detalles_fallidos.append(f"Error con {user_schema.email}: {str(e)}")
             fallidos += 1
-            db.rollback() # Revertir esta adición fallida
+            db.rollback() 
     
-    # 3. Hacer commit de todos los usuarios exitosos a la vez
     if exitosos > 0:
         db.commit()
         
     return {"exitosos": exitosos, "fallidos": fallidos, "detalles_fallidos": detalles_fallidos}
 
-# --- 2. CRUD de Asignatura (Clase -> Asignatura) ---
-
+# --- 2. CRUD de Asignatura (Sin cambios) ---
 def get_asignatura_por_id(db: Session, asignatura_id: int):
     return db.query(models.Asignatura).filter(models.Asignatura.id == asignatura_id)\
         .options(
             joinedload(models.Asignatura.profesor),
-            joinedload(models.Asignatura.alumnos_inscritos)
+            joinedload(models.Asignatura.alumnos_inscritos),
+            joinedload(models.Asignatura.horarios) # <-- Añadimos precarga de horarios
         ).first()
 
 def get_asignaturas(db: Session, skip: int = 0, limit: int = 100):
-    return db.query(models.Asignatura).options(joinedload(models.Asignatura.profesor)).offset(skip).limit(limit).all()
+    return db.query(models.Asignatura).options(
+        joinedload(models.Asignatura.profesor),
+        joinedload(models.Asignatura.horarios) # <-- Añadimos precarga de horarios
+    ).offset(skip).limit(limit).all()
 
 def get_asignaturas_por_profesor(db: Session, profesor_id: int):
-    return db.query(models.Asignatura).filter(models.Asignatura.profesor_id == profesor_id).all()
+    return db.query(models.Asignatura).filter(models.Asignatura.profesor_id == profesor_id)\
+        .options(joinedload(models.Asignatura.horarios)).all() # <-- Añadimos precarga de horarios
 
 def get_asignaturas_por_alumno_id(db: Session, alumno_id: int):
     usuario = get_usuario(db, alumno_id)
     if usuario:
+        # Cargamos los horarios de cada asignatura inscrita
+        usuario.asignaturas_inscritas.options = joinedload(models.Asignatura.horarios)
         return usuario.asignaturas_inscritas
     return []
 
@@ -123,8 +129,7 @@ def crear_asignatura(db: Session, asignatura: schemas.AsignaturaCreate):
     db.refresh(db_asignatura)
     return db_asignatura
 
-# --- 3. CRUD de Inscripciones (MODIFICADO) ---
-
+# --- 3. CRUD de Inscripciones (Sin cambios) ---
 def verificar_inscripcion(db: Session, alumno_id: int, asignatura_id: int) -> bool:
     inscripcion = db.query(models.inscripciones_alumnos).filter(
         models.inscripciones_alumnos.c.alumno_id == alumno_id,
@@ -138,7 +143,7 @@ def inscribir_alumno_en_asignatura(db: Session, alumno_id: int, asignatura_id: i
     if not db_asignatura: raise Exception("Asignatura no encontrada")
     if not db_alumno: raise Exception("Alumno no encontrado")
     if db_alumno in db_asignatura.alumnos_inscritos:
-        return db_asignatura # Ya inscrito
+        return db_asignatura 
     db_asignatura.alumnos_inscritos.append(db_alumno)
     db.commit()
     db.refresh(db_asignatura)
@@ -150,18 +155,17 @@ def desinscribir_alumno_de_asignatura(db: Session, alumno_id: int, asignatura_id
     if not db_asignatura: raise Exception("Asignatura no encontrada")
     if not db_alumno: raise Exception("Alumno no encontrado")
     if db_alumno not in db_asignatura.alumnos_inscritos:
-        return db_asignatura # No estaba inscrito
+        return db_asignatura 
     db_asignatura.alumnos_inscritos.remove(db_alumno)
     db.commit()
     db.refresh(db_asignatura)
     return db_asignatura
 
-# --- 4. CRUD de SesionClase (NUEVO) ---
-
+# --- 4. CRUD de SesionClase (Sin cambios) ---
 def crear_sesion_clase(db: Session, sesion: schemas.SesionClaseCreate) -> models.SesionClase:
     db_sesion = models.SesionClase(
         asignatura_id=sesion.asignatura_id,
-        fecha=datetime.utcnow(), # La fecha se toma al momento de crear
+        fecha=datetime.now(TZ_CHILE), 
         hora_inicio=sesion.hora_inicio,
         hora_fin=sesion.hora_fin,
         ubicacion=sesion.ubicacion
@@ -177,11 +181,10 @@ def get_sesion_clase_por_id(db: Session, sesion_id: int):
 def get_sesiones_por_asignatura(db: Session, asignatura_id: int):
     return db.query(models.SesionClase).filter(models.SesionClase.asignatura_id == asignatura_id).all()
 
-# --- 5. CRUD de Asistencia y QR (MODIFICADO) ---
-
+# --- 5. CRUD de Asistencia y QR (Sin cambios) ---
 def create_asistencia(db: Session, asistencia: schemas.AsistenciaCreate):
     db_asistencia = models.Asistencia(
-        sesion_clase_id = asistencia.sesion_clase_id, # <-- MODIFICADO
+        sesion_clase_id = asistencia.sesion_clase_id, 
         alumno_id = asistencia.alumno_id,
         timestamp = asistencia.timestamp,
         estado = asistencia.estado,
@@ -195,9 +198,9 @@ def create_asistencia(db: Session, asistencia: schemas.AsistenciaCreate):
     return db_asistencia
 
 def crear_token_asistencia(db: Session, sesion_id: int, expira_en_minutos: int = 2) -> models.TokenAsistencia:
-    fecha_expiracion = datetime.utcnow() + timedelta(minutes=expira_en_minutos)
+    fecha_expiracion = datetime.now(TZ_CHILE) + timedelta(minutes=expira_en_minutos)
     db_token = models.TokenAsistencia(
-        sesion_clase_id=sesion_id, # <-- MODIFICADO
+        sesion_clase_id=sesion_id, 
         fecha_expiracion=fecha_expiracion
     )
     db.add(db_token)
@@ -206,7 +209,6 @@ def crear_token_asistencia(db: Session, sesion_id: int, expira_en_minutos: int =
     return db_token
 
 def get_token_asistencia_por_uuid(db: Session, token: str) -> models.TokenAsistencia | None:
-    # Carga la sesión y la asignatura a la que pertenece
     return db.query(models.TokenAsistencia).filter(models.TokenAsistencia.token == token)\
         .options(
             joinedload(models.TokenAsistencia.sesion_clase)
@@ -219,8 +221,7 @@ def borrar_token_asistencia(db: Session, token_id: int):
         db.delete(db_token)
         db.commit()
 
-# --- 6. CRUD de Reportes (MODIFICADO) ---
-
+# --- 6. CRUD de Reportes (Sin cambios) ---
 def get_asistencia_por_sesion(db: Session, sesion_id: int):
     return db.query(models.Asistencia).filter(models.Asistencia.sesion_clase_id == sesion_id)\
         .options(joinedload(models.Asistencia.alumno)).all()
@@ -233,39 +234,16 @@ def get_asistencia_por_alumno(db: Session, alumno_id: int):
         ).all()
 
 def get_reporte_asistencia_asignatura(db: Session, asignatura_id: int):
-    """
-    Calcula el porcentaje de asistencia para una asignatura.
-    Este es el núcleo de la lógica de reportes.
-    """
-    # 1. Total de sesiones para esta asignatura
     total_sesiones = db.query(func.count(models.SesionClase.id))\
         .filter(models.SesionClase.asignatura_id == asignatura_id).scalar()
     
     if total_sesiones == 0:
         return {"total_sesiones": 0, "alumnos": []}
 
-    # 2. Contar asistencias por alumno para todas las sesiones de esta asignatura
-    reporte_query = db.query(
-            models.Usuario.id,
-            models.Usuario.nombre,
-            models.Usuario.email,
-            func.count(models.Asistencia.id).label('asistencias_presentes')
-        )\
-        .join(models.inscripciones_alumnos, models.Usuario.id == models.inscripciones_alumnos.c.alumno_id)\
-        .join(models.SesionClase, models.inscripciones_alumnos.c.asignatura_id == models.SesionClase.asignatura_id)\
-        .outerjoin(models.Asistencia, (models.Asistencia.alumno_id == models.Usuario.id) & (models.Asistencia.sesion_clase_id == models.SesionClase.id))\
-        .filter(models.inscripciones_alumnos.c.asignatura_id == asignatura_id)\
-        .filter(models.Asistencia.estado == 'presente')\
-        .group_by(models.Usuario.id, models.Usuario.nombre, models.Usuario.email)
-
-    # 3. (Corrección) Necesitamos a TODOS los alumnos inscritos, incluso con 0 asistencias
-    
-    # Primero, obtenemos todos los alumnos inscritos
     alumnos_inscritos = db.query(models.Usuario)\
         .join(models.inscripciones_alumnos, models.Usuario.id == models.inscripciones_alumnos.c.alumno_id)\
         .filter(models.inscripciones_alumnos.c.asignatura_id == asignatura_id).all()
 
-    # Segundo, contamos la asistencia de esos alumnos
     conteo_asistencias = db.query(
             models.Asistencia.alumno_id,
             func.count(models.Asistencia.id).label('presente')
@@ -274,10 +252,8 @@ def get_reporte_asistencia_asignatura(db: Session, asignatura_id: int):
         .filter(models.SesionClase.asignatura_id == asignatura_id)\
         .group_by(models.Asistencia.alumno_id).all()
 
-    # Convertimos el conteo a un dict para búsqueda rápida
     conteo_map = {r.alumno_id: r.presente for r in conteo_asistencias}
 
-    # 4. Formatear reporte
     reporte_final = []
     for alumno in alumnos_inscritos:
         presente = conteo_map.get(alumno.id, 0)
@@ -291,3 +267,31 @@ def get_reporte_asistencia_asignatura(db: Session, asignatura_id: int):
         })
 
     return {"total_sesiones": total_sesiones, "alumnos": reporte_final}
+
+# --- 👇 AÑADIDO: 7. CRUD de Horario ---
+
+def crear_horario(db: Session, horario: schemas.HorarioCreate) -> models.Horario:
+    """
+    Crea un nuevo horario para una asignatura.
+    """
+    db_horario = models.Horario(
+        asignatura_id=horario.asignatura_id,
+        dia_semana=horario.dia_semana,
+        hora_inicio=horario.hora_inicio,
+        hora_fin=horario.hora_fin
+    )
+    db.add(db_horario)
+    db.commit()
+    db.refresh(db_horario)
+    return db_horario
+
+def delete_horario(db: Session, horario_id: int) -> models.Horario | None:
+    """
+    Elimina un horario por su ID.
+    """
+    db_horario = db.query(models.Horario).filter(models.Horario.id == horario_id).first()
+    if db_horario:
+        db.delete(db_horario)
+        db.commit()
+    return db_horario
+# --- 👆 FIN DE LA MODIFICACIÓN ---
