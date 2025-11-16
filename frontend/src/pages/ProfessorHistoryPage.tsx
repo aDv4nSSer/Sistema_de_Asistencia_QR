@@ -7,6 +7,9 @@ import ProfessorReportDetail from '../components/professor/ProfessorReportDetail
 import ProfessorSessionList from '../components/professor/ProfessorSessionList';
 import apiClient from '../services/apiClient';
 
+// --- 👇 AÑADIDO: Importamos la tarjeta de bienvenida ---
+import ProfessorWelcomeCard from '../components/professor/ProfessorWelcomeCard';
+
 interface Asignatura {
   id: number; 
   nombre: string; 
@@ -71,6 +74,10 @@ const ProfessorHistoryPage = () => {
 
   return (
     <Box>
+      {/* --- 👇 AÑADIDO: Tarjeta de Bienvenida --- */}
+      <ProfessorWelcomeCard />
+      {/* --- 👆 FIN DE LA MODIFICACIÓN --- */}
+
       <Grid container spacing={3}>
         <Grid item xs={12} md={4}>
           <Typography variant="h5" gutterBottom>

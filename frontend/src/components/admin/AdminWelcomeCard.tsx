@@ -1,8 +1,8 @@
 import { Paper, Typography, Box, Stack } from '@mui/material';
-import SchoolIcon from '@mui/icons-material/School'; // Importamos un icono
+import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
 import { useAuthStore } from '../../store/authStore';
 
-const ProfessorWelcomeCard = () => {
+const AdminWelcomeCard = () => {
   const { user } = useAuthStore();
   const today = new Date().toLocaleDateString('es-CL', {
     weekday: 'long',
@@ -11,25 +11,21 @@ const ProfessorWelcomeCard = () => {
   });
 
   return (
-    // Usamos Paper para un fondo y sombra consistentes
     <Paper sx={{ p: { xs: 2, sm: 3 }, mb: 3, borderRadius: 2 }}>
       <Stack 
         direction={{ xs: 'column', sm: 'row' }} 
         spacing={2}
         alignItems="center"
       >
-        {/* Icono decorativo */}
         <Box sx={{ display: { xs: 'none', sm: 'block' } }}>
-          <SchoolIcon sx={{ fontSize: 60, color: 'primary.main' }} />
+          <AdminPanelSettingsIcon sx={{ fontSize: 60, color: 'primary.main' }} />
         </Box>
-        
-        {/* Contenido de texto */}
         <Box sx={{ flexGrow: 1, textAlign: { xs: 'center', sm: 'left' } }}>
           <Typography variant="h5" gutterBottom>
-            Bienvenido, {user?.nombre || 'Profesor'}
+            Panel de Gestión
           </Typography>
           <Typography variant="body1" color="text.secondary">
-            Estas son tus asignaturas. Hoy es {today}.
+            Bienvenido, {user?.nombre || user?.rol}. Hoy es {today}.
           </Typography>
         </Box>
       </Stack>
@@ -37,4 +33,4 @@ const ProfessorWelcomeCard = () => {
   );
 };
 
-export default ProfessorWelcomeCard;
+export default AdminWelcomeCard;

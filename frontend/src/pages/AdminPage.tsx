@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { 
-  Box, Typography, Paper, Alert, CircularProgress, 
+  Box, Paper, Alert, CircularProgress, 
   Table, TableBody, TableCell, TableContainer, TableHead, TableRow, 
   Button, Fab, Tabs, Tab
 } from '@mui/material';
@@ -11,9 +11,10 @@ import { useAuthStore } from '../store/authStore';
 import apiClient from '../services/apiClient';
 import CreateAsignaturaModal from '../components/admin/CreateAsignaturaModal';
 import UserManagement from '../components/admin/UserManagement';
-// --- 👇 AÑADIDO ---
 import AdminReportPanel from '../components/admin/AdminReportPanel';
-// --- 👆 FIN ---
+
+// --- 👇 AÑADIDO: Importamos la tarjeta de bienvenida ---
+import AdminWelcomeCard from '../components/admin/AdminWelcomeCard';
 
 interface Asignatura {
   id: number;
@@ -26,6 +27,7 @@ interface Asignatura {
 }
 
 // --- Componente de Tab de Asignaturas (Gestión de TI) ---
+// (Este componente interno no necesita cambios)
 const AsignaturaManagement = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
@@ -88,13 +90,15 @@ const AsignaturaManagement = () => {
                 <TableCell>{asignatura.profesor?.nombre || <Alert severity="warning" sx={{p: 0}}>Sin profesor</Alert>}</TableCell>
                 <TableCell align="right">{asignatura.alumnos_inscritos.length}</TableCell>
                 <TableCell align="right">
+                  {/* --- 👇 MODIFICACIÓN AQUÍ --- */}
                   <Button
                     variant="outlined"
                     startIcon={<EditIcon />}
                     onClick={() => navigate(`/admin/asignatura/${asignatura.id}/alumnos`)}
                   >
-                    Gestionar Alumnos
+                    Gestionar Asignatura
                   </Button>
+                  {/* --- 👆 FIN DE LA MODIFICACIÓN --- */}
                 </TableCell>
               </TableRow>
             ))}
@@ -126,42 +130,43 @@ const AdminPage = () => {
     setTabIndex(newValue);
   };
 
+  // --- 👇 MODIFICADO: Cambiamos la estructura ---
   return (
-    <Paper 
-      elevation={2} 
-      sx={{ p: { xs: 2, md: 3 }, borderRadius: 3, width: '100%' }}
-    >
-      <Typography variant="h4" gutterBottom>
-        Panel de Gestión ({user?.rol})
-      </Typography>
-      
-      <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 2 }}>
-        <Tabs value={tabIndex} onChange={handleTabChange} aria-label="Panel de gestión">
-          <Tab label="Gestión de Asignaturas" id="tab-0" />
-          {user?.rol === 'ti' && <Tab label="Gestión de Usuarios" id="tab-1" />}
-          {user?.rol === 'administrador' && <Tab label="Reportes de Asistencia" id="tab-1" />}
-        </Tabs>
-      </Box>
+    <Box>
+      {/* 1. Tarjeta de Bienvenida */}
+      <AdminWelcomeCard />
 
-      {/* Pestaña 0: Gestión de Asignaturas (TI y Admin) */}
-      {tabIndex === 0 && (
-        <AsignaturaManagement />
-      )}
+      {/* 2. Tarjeta de Contenido Principal (las pestañas) */}
+      <Paper 
+        elevation={2} 
+        sx={{ p: { xs: 2, md: 3 }, borderRadius: 3, width: '100%' }}
+      >
+        <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 2 }}>
+          <Tabs value={tabIndex} onChange={handleTabChange} aria-label="Panel de gestión">
+            <Tab label="Gestión de Asignaturas" id="tab-0" />
+            {user?.rol === 'ti' && <Tab label="Gestión de Usuarios" id="tab-1" />}
+            {user?.rol === 'administrador' && <Tab label="Reportes de Asistencia" id="tab-1" />}
+          </Tabs>
+        </Box>
 
-      {/* Pestaña 1: Gestión de Usuarios (Solo TI) */}
-      {tabIndex === 1 && user?.rol === 'ti' && (
-        <UserManagement />
-      )}
-      
-      {/* Pestaña 1: Reportes (Solo Admin) */}
-      {/* --- 👇 MODIFICADO --- */}
-      {tabIndex === 1 && user?.rol === 'administrador' && (
-        <AdminReportPanel />
-      )}
-      {/* --- 👆 FIN --- */}
+        {/* Pestaña 0: Gestión de Asignaturas (TI y Admin) */}
+        {tabIndex === 0 && (
+          <AsignaturaManagement />
+        )}
 
-    </Paper>
+        {/* Pestaña 1: Gestión de Usuarios (Solo TI) */}
+        {tabIndex === 1 && user?.rol === 'ti' && (
+          <UserManagement />
+        )}
+        
+        {/* Pestaña 1: Reportes (Solo Admin) */}
+        {tabIndex === 1 && user?.rol === 'administrador' && (
+          <AdminReportPanel />
+        )}
+      </Paper>
+    </Box>
   );
+  // --- 👆 FIN DE LA MODIFICACIÓN ---
 };
 
 export default AdminPage;

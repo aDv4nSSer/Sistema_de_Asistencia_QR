@@ -1,52 +1,54 @@
-import { useAuthStore } from '../store/authStore';
-import { Button, Typography, Paper, Box } from '@mui/material'; // Importa Box
+import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuthStore } from '../store/authStore';
+import { Box, CircularProgress, Typography } from '@mui/material';
 
+/**
+ * Esta página ya no es un "dashboard", sino un "router" inteligente.
+ * Redirige al usuario a la página principal de su rol.
+ */
 const DashboardPage = () => {
-  const { user, logout } = useAuthStore();
+  const { user } = useAuthStore();
   const navigate = useNavigate();
 
-  const handleLogout = () => {
-    logout();
-    navigate('/login');
-  };
+  useEffect(() => {
+    if (!user) return;
 
+    // Lógica de redirección basada en el rol del usuario
+    switch (user.rol) {
+      case 'estudiante':
+        navigate('/estudiante/asignaturas', { replace: true });
+        break;
+      case 'profesor':
+        navigate('/profesor/asignaturas', { replace: true });
+        break;
+      case 'administrador':
+      case 'ti':
+        navigate('/admin/gestion', { replace: true });
+        break;
+      default:
+        // Por si acaso, lo enviamos al login si el rol no es válido
+        navigate('/login', { replace: true });
+    }
+    
+    // El { replace: true } es importante: evita que el usuario
+    // pueda presionar "Atrás" y volver a esta página de carga.
+
+  }, [user, navigate]); // Se ejecuta en cuanto se carga el usuario
+
+  // Muestra un indicador de carga mientras se procesa la redirección
   return (
-    // Opcional: Envuelve la página en un Box para centrarla verticalmente también
     <Box 
       sx={{ 
         display: 'flex', 
         flexDirection: 'column', 
-        alignItems: 'center', // Centra horizontalmente el Paper
-        pt: 4 // Añade un poco de padding superior
+        alignItems: 'center', 
+        justifyContent: 'center',
+        height: '60vh' 
       }}
     >
-      <Paper 
-        elevation={2} 
-        sx={{ 
-          p: { xs: 2, md: 3 }, 
-          borderRadius: 3, 
-          // --- 👇 TUS CAMBIOS + CENTRADO ---
-          width: '100%',     // Que ocupe el 100% de su contenedor padre
-          maxWidth: 600,     // Pero solo hasta un máximo de 600px
-          textAlign: 'center', // Centra el texto dentro de la caja
-          mx: 'auto',          // Centra la caja (esto es lo que pediste)
-          // --- 👆 FIN DE LOS CAMBIOS ---
-        }}
-      >
-        <Typography variant="h4" component="h1" gutterBottom>
-          Panel Principal
-        </Typography>
-        {user && (
-          <>
-            <Typography variant="h6">Bienvenido, {user.nombre || user.email}</Typography>
-            <Typography>Tu rol es: <strong>{user.rol}</strong></Typography>
-          </>
-        )}
-        <Button variant="contained" onClick={handleLogout} sx={{ mt: 2 }}>
-          Cerrar Sesión
-        </Button>
-      </Paper>
+      <CircularProgress />
+      <Typography sx={{ mt: 2 }}>Redirigiendo...</Typography>
     </Box>
   );
 };

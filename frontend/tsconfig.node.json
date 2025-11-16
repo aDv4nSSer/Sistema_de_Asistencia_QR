@@ -5,7 +5,14 @@
     "module": "ESNext",
     "moduleResolution": "bundler",
     "allowSyntheticDefaultImports": true,
-    "strict": true
+    "strict": true,
+    
+    // --- 👇 MODIFICADO ---
+    "allowJs": true, 
+    // "noEmit": true, <-- 1. ELIMINAMOS ESTA LÍNEA
+    "outDir": "./dist"  // <-- 2. AÑADIMOS ESTA LÍNEA
+    // --- 👆 FIN DE LA MODIFICACIÓN ---
   },
-  "include": ["vite.config.js"]
+  
+  "include": ["vite.config.ts", "eslint.config.js"]
 }

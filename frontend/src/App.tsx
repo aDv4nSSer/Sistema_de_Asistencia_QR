@@ -16,11 +16,18 @@ import StudentAsignaturasPage from './pages/StudentAsignaturasPage';
 import AdminPage from './pages/AdminPage';
 import AdminAsignaturaDetailPage from './pages/AdminAsignaturaDetailPage';
 
+// --- 👇 1. IMPORTA EL NUEVO COMPONENTE ---
+import ScrollToTop from './components/layout/ScrollToTop';
+
 function App() {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
 
   return (
     <BrowserRouter>
+      {/* --- 👇 2. AÑADE EL COMPONENTE AQUÍ --- */}
+      {/* Debe estar dentro de BrowserRouter para que funcione */}
+      <ScrollToTop />
+      
       <Routes>
         {/* Rutas Públicas */}
         <Route
