@@ -1,10 +1,10 @@
 from typing import List
 from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import func
-# --- 👇 MODIFICADO: Importamos los nuevos modelos/schemas ---
+# --- MODIFICADO: Importamos los nuevos modelos/schemas ---
 from app import models, schemas
 from app.models import Horario, DiaSemana
-# --- 👆 FIN DE LA MODIFICACIÓN ---
+# --- FIN DE LA MODIFICACIÓN ---
 from datetime import datetime, timedelta
 from app.auth_utils import get_password_hash
 import pytz
@@ -268,7 +268,7 @@ def get_reporte_asistencia_asignatura(db: Session, asignatura_id: int):
 
     return {"total_sesiones": total_sesiones, "alumnos": reporte_final}
 
-# --- 👇 AÑADIDO: 7. CRUD de Horario ---
+# --- AÑADIDO: 7. CRUD de Horario ---
 
 def crear_horario(db: Session, horario: schemas.HorarioCreate) -> models.Horario:
     """
@@ -294,4 +294,4 @@ def delete_horario(db: Session, horario_id: int) -> models.Horario | None:
         db.delete(db_horario)
         db.commit()
     return db_horario
-# --- 👆 FIN DE LA MODIFICACIÓN ---
+# --- FIN DE LA MODIFICACIÓN ---
