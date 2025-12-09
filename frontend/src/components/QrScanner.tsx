@@ -7,7 +7,7 @@ interface QrScannerProps {
 
 const QrScanner = ({ onScanSuccess }: QrScannerProps) => {
   const { ref } = useZxing({
-    // 👇 === LA MODIFICACIÓN ESTÁ AQUÍ ===
+    //  === LA MODIFICACIÓN ESTÁ AQUÍ ===
     // Le pedimos al navegador que use la cámara trasera (la que apunta al "entorno")
     constraints: {
       video: {
