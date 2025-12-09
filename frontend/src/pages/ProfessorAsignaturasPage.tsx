@@ -2,18 +2,18 @@ import { useState, useEffect } from 'react';
 import { 
   Box, Modal, Grid, Alert, CircularProgress, 
   Card, CardContent, Typography, Stack, Button,
-  // --- 👇 AÑADIDO: Para mostrar los horarios ---
+  // --- AÑADIDO: Para mostrar los horarios ---
   List, ListItem, ListItemIcon, ListItemText, Chip
 } from '@mui/material';
 import QrCode2Icon from '@mui/icons-material/QrCode2';
 import HistoryIcon from '@mui/icons-material/History';
-// --- 👇 AÑADIDO: Icono de reloj ---
+// --- AÑADIDO: Icono de reloj ---
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import { useNavigate } from 'react-router-dom';
 import apiClient from '../services/apiClient';
 import ProfessorWelcomeCard from '../components/professor/ProfessorWelcomeCard';
 
-// --- 👇 AÑADIDO: Interfaz de Horario ---
+// --- AÑADIDO: Interfaz de Horario ---
 enum DiaSemana {
   lunes = "Lunes",
   martes = "Martes",
@@ -30,7 +30,7 @@ interface Horario {
   hora_inicio: string;
   hora_fin: string;
 }
-// --- 👆 FIN DE LA MODIFICACIÓN ---
+// --- FIN DE LA MODIFICACIÓN ---
 
 // Interface para Asignatura
 interface Asignatura {
@@ -80,7 +80,7 @@ const ProfessorAsignaturasPage = () => {
     setQrError(null);
 
     try {
-      // --- 👇 MODIFICACIÓN: Lógica de Iniciar Sesión ---
+      // --- MODIFICACIÓN: Lógica de Iniciar Sesión ---
       // 1. Llamamos a "iniciar-sesion". El backend valida el horario.
       // Ya no enviamos un body, el backend lo deduce todo.
       const sesionResponse = await apiClient.post<SesionClase>(
@@ -107,7 +107,7 @@ const ProfessorAsignaturasPage = () => {
     } finally {
       setQrLoading(false);
     }
-    // --- 👆 FIN DE LA MODIFICACIÓN ---
+    // --- FIN DE LA MODIFICACIÓN ---
   };
   
   const handleCloseQrModal = () => setQrModalOpen(false);
@@ -129,7 +129,7 @@ const ProfessorAsignaturasPage = () => {
             <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
               <CardContent sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', gap: 2 }}>
                 
-                {/* --- 👇 MODIFICACIÓN: Mostrar Horarios --- */}
+                {/* --- MODIFICACIÓN: Mostrar Horarios --- */}
                 <Box sx={{ width: '100%' }}>
                   <Typography variant="h6" noWrap title={asignatura.nombre}>
                     {asignatura.nombre}
@@ -157,7 +157,7 @@ const ProfessorAsignaturasPage = () => {
                     <Chip label="Sin horario asignado" size="small" sx={{ mt: 1 }} />
                   )}
                 </Box>
-                {/* --- 👆 FIN DE LA MODIFICACIÓN --- */}
+                {/* --- FIN DE LA MODIFICACIÓN --- */}
 
                 <Stack 
                   direction="column" 
@@ -223,7 +223,7 @@ const ProfessorAsignaturasPage = () => {
           )}
         </Box>
       </Modal>
-      {/* --- 👆 FIN DE LA MODIFICACIÓN --- */}
+      {/* --- FIN DE LA MODIFICACIÓN --- */}
     </Box>
   );
 };
