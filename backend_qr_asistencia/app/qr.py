@@ -14,7 +14,6 @@ from app.auth_utils import get_current_user_with_roles
 # --- 👇 AÑADIDO (1/3): IMPORT DE ZONA HORARIA ---
 import pytz
 TZ_CHILE = pytz.timezone('America/Santiago')
-# --- 👆 FIN DE LA MODIFICACIÓN ---
 
 router = APIRouter(
     prefix="/qr",
@@ -60,7 +59,7 @@ def verificar_token_uuid(db: Session, token_uuid: str) -> models.TokenAsistencia
 
     # --- 👇 MODIFICADO (2/3): USA HORA LOCAL ---
     if datetime.now(TZ_CHILE) > db_token.fecha_expiracion:
-    # --- 👆 FIN DE LA MODIFICACIÓN ---
+   
         crud.borrar_token_asistencia(db, db_token.id)
         raise HTTPException(
             status_code=status.HTTP_410_GONE,
@@ -146,7 +145,7 @@ def register_attendance_with_token(
         
         # --- 👇 MODIFICADO (3/3): USA HORA LOCAL ---
         timestamp=datetime.now(TZ_CHILE),
-        # --- 👆 FIN DE LA MODIFICACIÓN ---
+       
         
         estado="presente", 
         token_qr=token_data.qr_token,
