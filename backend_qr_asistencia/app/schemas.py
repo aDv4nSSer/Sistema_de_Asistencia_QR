@@ -42,7 +42,7 @@ class Token(BaseModel):
     access_token: str
     token_type: str
 
-# --- 👇 AÑADIDO (1/2): Nuevos Schemas de Horario ---
+# --- AÑADIDO (1/2): Nuevos Schemas de Horario ---
 class HorarioBase(BaseModel):
     dia_semana: DiaSemana
     hora_inicio: str # Ej: "09:00"
@@ -57,7 +57,7 @@ class Horario(HorarioBase):
     
     class Config:
         from_attributes = True 
-# --- 👆 FIN DE LA MODIFICACIÓN ---
+# --- FIN DE LA MODIFICACIÓN ---
 
 
 # --- 2. Schemas de Asignatura (Clase -> Asignatura) ---
@@ -72,9 +72,9 @@ class Asignatura(AsignaturaCreate):
     profesor: Optional[UsuarioInfo] = None
     alumnos_inscritos: List[UsuarioInfo] = []
     
-    # --- 👇 AÑADIDO (2/2): Incluir horarios en el schema ---
+    # --- AÑADIDO (2/2): Incluir horarios en el schema ---
     horarios: List[Horario] = []
-    # --- 👆 FIN DE LA MODIFICACIÓN ---
+    # --- FIN DE LA MODIFICACIÓN ---
     
     class Config:
         from_attributes = True 
@@ -193,7 +193,7 @@ class BulkUserCreateResponse(BaseModel):
     fallidos: int
     detalles_fallidos: List[str]
 
-# --- 👇 NUEVOS SCHEMAS AÑADIDOS ---
+# --- NUEVOS SCHEMAS AÑADIDOS ---
 
 # Schema para la petición del profesor al justificar
 class AsistenciaManualCreate(BaseModel):
