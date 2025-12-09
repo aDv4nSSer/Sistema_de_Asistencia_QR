@@ -3,23 +3,23 @@ from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 from app import database, schemas, auth_utils 
 
-# --- 👇 AÑADIDO ---
+# --- AÑADIDO ---
 from app.limiter import limiter # Importamos nuestra instancia
-# --- 👆 FIN DE LA MODIFICACIÓN ---
+# --- FIN DE LA MODIFICACIÓN ---
 
 router = APIRouter(
     tags=["Autenticación"]
 )
 
 @router.post("/token", response_model=schemas.Token)
-# --- 👇 MODIFICADO (1/2): APLICAMOS EL LÍMITE ---
+# --- MODIFICADO (1/2): APLICAMOS EL LÍMITE ---
 @limiter.limit("5/minute") # Límite: 5 intentos por minuto por IP
 def login_for_access_token(
     response: Response,
     request: Request, # <-- AÑADIDO: 'request' es necesario para el limiter
     form_data: OAuth2PasswordRequestForm = Depends(),
     db: Session = Depends(database.get_db)
-    # --- 👆 FIN DE LA MODIFICACIÓN (1/2) ---
+    # --- FIN DE LA MODIFICACIÓN (1/2) ---
 ):
     """
     Endpoint de inicio de sesión.
