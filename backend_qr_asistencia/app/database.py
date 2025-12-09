@@ -6,7 +6,7 @@ from sqlalchemy.ext.declarative import declarative_base
 # Importamos nuestra configuración centralizada
 from app.core.config import settings
 
-# 👈 MODIFICACIÓN: La URL ahora viene del objeto settings
+# MODIFICACIÓN: La URL ahora viene del objeto settings
 SQLALCHEMY_DATABASE_URL = settings.DATABASE_URL
 
 # Crear motor de conexión
