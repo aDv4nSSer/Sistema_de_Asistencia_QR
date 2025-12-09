@@ -28,7 +28,7 @@ def leer_mi_historial_de_asistencia(
     asistencias = crud.get_asistencia_por_alumno(db, alumno_id=current_user.id)
     return asistencias
 
-# --- 👇 AÑADIDO: Endpoint para OBTENER lista detallada (Presentes + Ausentes) ---
+# --- AÑADIDO: Endpoint para OBTENER lista detallada (Presentes + Ausentes) ---
 @router.get("/sesiones/{sesion_id}/asistencia-detallada", response_model=List[schemas.AsistenciaDetalladaAlumno])
 def leer_asistencia_detallada_por_sesion(
     sesion_id: int,
@@ -81,7 +81,7 @@ def leer_asistencia_detallada_por_sesion(
             ))
     return lista_final
 
-# --- 👇 AÑADIDO: Endpoint para CREAR asistencia (Justificar) ---
+# --- AÑADIDO: Endpoint para CREAR asistencia (Justificar) ---
 @router.post("/manual", response_model=schemas.AsistenciaConAlumnoInfo)
 @limiter.limit("20/minute") # Limitar para evitar abuso
 def registrar_asistencia_manual(
