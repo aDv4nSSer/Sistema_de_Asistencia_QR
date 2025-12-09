@@ -42,7 +42,7 @@ const Navbar = ({ onDrawerToggle }: NavbarProps) => {
         
         <Box sx={{ display: 'flex', alignItems: 'center' }}>
           
-          {/* --- 👇 MODIFICACIÓN: Botón de menú azul --- */}
+          {/* ---  MODIFICACIÓN: Botón de menú azul --- */}
           <IconButton
             color="primary" // Color azul oscuro para que sea visible
             aria-label="open drawer"
@@ -52,7 +52,7 @@ const Navbar = ({ onDrawerToggle }: NavbarProps) => {
           >
             <MenuIcon />
           </IconButton>
-          {/* --- 👆 FIN DE LA MODIFICACIÓN --- */}
+          {/* ---  FIN DE LA MODIFICACIÓN --- */}
           
           <img 
             src={logoUni} 
@@ -84,7 +84,7 @@ const Navbar = ({ onDrawerToggle }: NavbarProps) => {
           </Box>
         </Box>
         
-        {/* --- 👇 MODIFICACIÓN: Botón de logout azul --- */}
+        {/* ---  MODIFICACIÓN: Botón de logout azul --- */}
         <Button 
           onClick={handleLogout} 
           variant="contained" 
@@ -95,7 +95,7 @@ const Navbar = ({ onDrawerToggle }: NavbarProps) => {
         >
           Cerrar Sesión
         </Button>
-        {/* --- 👆 FIN DE LA MODIFICACIÓN --- */}
+        {/* ---  FIN DE LA MODIFICACIÓN --- */}
         
       </Toolbar>
     </AppBar>
