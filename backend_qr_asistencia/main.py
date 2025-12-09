@@ -16,14 +16,14 @@ from app.routers import asignaturas
 from app.qr import router as qr_router
 from fastapi.middleware.cors import CORSMiddleware 
 
-# --- 👇 AÑADIDO (1/3): IMPORTS PARA RATE LIMIT ---
+# ---  AÑADIDO (1/3): IMPORTS PARA RATE LIMIT ---
 from app.limiter import limiter 
 from slowapi.errors import RateLimitExceeded
-# --- 👆 FIN DE LA MODIFICACIÓN ---
+
 
 app = FastAPI()
 
-# --- 👇 AÑADIDO (2/3): INICIALIZAR LIMITER Y MANEJAR EXCEPCIÓN ---
+# ---  AÑADIDO (2/3): INICIALIZAR LIMITER Y MANEJAR EXCEPCIÓN ---
 app.state.limiter = limiter
 
 @app.exception_handler(RateLimitExceeded)
@@ -36,7 +36,7 @@ async def rate_limit_exceeded_handler(request: Request, exc: RateLimitExceeded):
         status_code=status.HTTP_429_TOO_MANY_REQUESTS,
         content={"detail": f"Demasiadas peticiones. Límite: {exc.detail}"},
     )
-# --- 👆 FIN DE LA MODIFICACIÓN ---
+
 
 origins = ["*"]
 
