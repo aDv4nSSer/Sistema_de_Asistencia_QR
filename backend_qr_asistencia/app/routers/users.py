@@ -12,7 +12,7 @@ router = APIRouter(
 
 get_db = database.get_db
 
-# --- 👇 AÑADIDO: Listar usuarios (para Admin/TI) ---
+# --- AÑADIDO: Listar usuarios (para Admin/TI) ---
 @router.get("/", response_model=List[schemas.Usuario])
 def leer_usuarios(
     rol: Optional[str] = None, 
@@ -32,7 +32,7 @@ def leer_usuarios(
     else:
         usuarios = crud.get_usuarios(db, skip=skip, limit=limit)
     return usuarios
-# --- 👆 FIN DE LA MODIFICACIÓN ---
+# --- FIN DE LA MODIFICACIÓN ---
 
 
 @router.post("/", response_model=schemas.Usuario)
