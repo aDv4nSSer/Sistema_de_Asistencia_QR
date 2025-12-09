@@ -11,7 +11,7 @@ import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
 import apiClient from '../services/apiClient';
 
-// --- 👇 INTERFAZ MODIFICADA ---
+// --- INTERFAZ MODIFICADA ---
 interface AsistenciaDetalladaAlumno {
   id: number; // id del alumno
   nombre: string;
@@ -20,17 +20,17 @@ interface AsistenciaDetalladaAlumno {
   timestamp: string | null; // Null si está ausente
   asistencia_id: number | null; // Null si está ausente
 }
-// --- 👆 FIN DE LA MODIFICACIÓN ---
+// --- FIN DE LA MODIFICACIÓN ---
 
 const ProfessorAttendancePage = () => {
   const { sesionId } = useParams();
   const navigate = useNavigate();
-  // --- 👇 TIPO MODIFICADO ---
+  // --- TIPO MODIFICADO ---
   const [asistencias, setAsistencias] = useState<AsistenciaDetalladaAlumno[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // --- 👇 AÑADIDO: Estado de carga para botones ---
+  // --- AÑADIDO: Estado de carga para botones ---
   const [loadingButton, setLoadingButton] = useState<number | null>(null);
 
 
@@ -39,7 +39,7 @@ const ProfessorAttendancePage = () => {
     try {
       setLoading(true);
       setError(null);
-      // --- 👇 ENDPOINT MODIFICADO ---
+      // --- ENDPOINT MODIFICADO ---
       const response = await apiClient.get(`/asistencia/sesiones/${sesionId}/asistencia-detallada`);
       setAsistencias(response.data);
     } catch (err: any) {
@@ -64,7 +64,7 @@ const ProfessorAttendancePage = () => {
     });
   };
 
-  // --- 👇 AÑADIDO: Función para marcar asistencia ---
+  // --- AÑADIDO: Función para marcar asistencia ---
   const handleMarkPresent = async (alumnoId: number) => {
     if (!sesionId) return;
     
@@ -87,7 +87,7 @@ const ProfessorAttendancePage = () => {
     }
   };
 
-  // --- 👇 AÑADIDO: Función para color de Chip ---
+  // --- AÑADIDO: Función para color de Chip ---
   const getEstadoChip = (asistencia: AsistenciaDetalladaAlumno) => {
     if (asistencia.estado === 'presente') {
       return <Chip icon={<CheckCircleOutlineIcon />} label="Presente" color="success" size="small" variant="outlined" />;
@@ -120,7 +120,7 @@ const ProfessorAttendancePage = () => {
         </Alert>
       )}
 
-      {/* --- 👇 TABLA MODIFICADA --- */}
+      {/* --- TABLA MODIFICADA --- */}
       {!loading && !error && asistencias.length > 0 && (
         <TableContainer>
           <Table sx={{ minWidth: 650 }} aria-label="simple table">
@@ -167,7 +167,7 @@ const ProfessorAttendancePage = () => {
           </Table>
         </TableContainer>
       )}
-      {/* --- 👆 FIN DE LA MODIFICACIÓN --- */}
+      {/* --- FIN DE LA MODIFICACIÓN --- */}
     </Paper>
   );
 };
