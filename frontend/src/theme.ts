@@ -53,7 +53,7 @@ const theme = createTheme({
       }
     },
     
-    // --- 👇 MODIFICACIÓN: AppBar BLANCO ---
+    // --- MODIFICACIÓN: AppBar BLANCO ---
     MuiAppBar: {
       styleOverrides: {
         root: {
@@ -66,9 +66,9 @@ const theme = createTheme({
         }
       }
     },
-    // --- 👆 FIN DE LA MODIFICACIÓN ---
+    // --- FIN DE LA MODIFICACIÓN ---
 
-    // --- 👇 MODIFICACIÓN: Pestañas con colores del logo ---
+    // --- MODIFICACIÓN: Pestañas con colores del logo ---
     MuiTabs: {
       styleOverrides: {
         root: {
@@ -96,7 +96,7 @@ const theme = createTheme({
         }
       }
     }
-    // --- 👆 FIN DE LA MODIFICACIÓN ---
+    // --- FIN DE LA MODIFICACIÓN ---
   },
 });
 
