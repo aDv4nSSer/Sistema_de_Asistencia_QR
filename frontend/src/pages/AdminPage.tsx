@@ -13,7 +13,7 @@ import CreateAsignaturaModal from '../components/admin/CreateAsignaturaModal';
 import UserManagement from '../components/admin/UserManagement';
 import AdminReportPanel from '../components/admin/AdminReportPanel';
 
-// --- 👇 AÑADIDO: Importamos la tarjeta de bienvenida ---
+// ---  AÑADIDO: Importamos la tarjeta de bienvenida ---
 import AdminWelcomeCard from '../components/admin/AdminWelcomeCard';
 
 interface Asignatura {
@@ -90,7 +90,7 @@ const AsignaturaManagement = () => {
                 <TableCell>{asignatura.profesor?.nombre || <Alert severity="warning" sx={{p: 0}}>Sin profesor</Alert>}</TableCell>
                 <TableCell align="right">{asignatura.alumnos_inscritos.length}</TableCell>
                 <TableCell align="right">
-                  {/* --- 👇 MODIFICACIÓN AQUÍ --- */}
+                  {/* ---  MODIFICACIÓN AQUÍ --- */}
                   <Button
                     variant="outlined"
                     startIcon={<EditIcon />}
@@ -98,7 +98,7 @@ const AsignaturaManagement = () => {
                   >
                     Gestionar Asignatura
                   </Button>
-                  {/* --- 👆 FIN DE LA MODIFICACIÓN --- */}
+                  {/* ---  FIN DE LA MODIFICACIÓN --- */}
                 </TableCell>
               </TableRow>
             ))}
@@ -130,7 +130,7 @@ const AdminPage = () => {
     setTabIndex(newValue);
   };
 
-  // --- 👇 MODIFICADO: Cambiamos la estructura ---
+  // ---  MODIFICADO: Cambiamos la estructura ---
   return (
     <Box>
       {/* 1. Tarjeta de Bienvenida */}
@@ -166,7 +166,7 @@ const AdminPage = () => {
       </Paper>
     </Box>
   );
-  // --- 👆 FIN DE LA MODIFICACIÓN ---
+  // ---  FIN DE LA MODIFICACIÓN ---
 };
 
 export default AdminPage;
