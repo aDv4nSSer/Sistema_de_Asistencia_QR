@@ -4,7 +4,7 @@ import {
   Box, Typography, Alert, CircularProgress, 
   Table, TableBody, TableCell, TableContainer, TableHead, TableRow, 
   Fab, Tooltip, IconButton, Chip, Switch, Divider,
-  // --- 👇 AÑADIDO: Imports para el filtro ---
+  // ---  AÑADIDO: Imports para el filtro ---
   FormControl, InputLabel, Select, MenuItem
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
@@ -27,10 +27,10 @@ const UserManagement = () => {
   const [users, setUsers] = useState<Usuario[]>([]);
   const [modalOpen, setModalOpen] = useState(false);
   
-  // --- 👇 AÑADIDO: Estado para el filtro ---
+  // ---  AÑADIDO: Estado para el filtro ---
   const [roleFilter, setRoleFilter] = useState<string>('todos');
 
-  // --- 👇 MODIFICADO: fetchUsers ahora usa el filtro ---
+  // ---  MODIFICADO: fetchUsers ahora usa el filtro ---
   const fetchUsers = async () => {
     try {
       setLoading(true);
@@ -52,12 +52,12 @@ const UserManagement = () => {
     }
   };
 
-  // --- 👇 MODIFICADO: useEffect ahora depende de 'roleFilter' ---
+  // ---  MODIFICADO: useEffect ahora depende de 'roleFilter' ---
   useEffect(() => {
     fetchUsers();
   }, [roleFilter]); // Se ejecutará de nuevo cada vez que 'roleFilter' cambie
 
-  // --- 👇 AÑADIDO: Manejador para el cambio del filtro ---
+  // ---  AÑADIDO: Manejador para el cambio del filtro ---
   const handleFilterChange = (event: any) => { // Puedes usar 'SelectChangeEvent' si importas
     setRoleFilter(event.target.value as string);
   };
@@ -91,7 +91,7 @@ const UserManagement = () => {
         <Typography variant="body2">Usuarios Individuales</Typography>
       </Divider>
 
-      {/* --- 👇 AÑADIDO: Interfaz del Filtro --- */}
+      {/* ---  AÑADIDO: Interfaz del Filtro --- */}
       <Box sx={{ mb: 2, maxWidth: 300 }}>
         <FormControl fullWidth size="small">
           <InputLabel id="role-filter-label">Filtrar por Rol</InputLabel>
@@ -110,7 +110,7 @@ const UserManagement = () => {
           </Select>
         </FormControl>
       </Box>
-      {/* --- 👆 FIN DE LA MODIFICACIÓN --- */}
+      {/* ---  FIN DE LA MODIFICACIÓN --- */}
 
       {loading && (
         <Box sx={{ display: 'flex', justifyContent: 'center', my: 4 }}>
@@ -133,7 +133,7 @@ const UserManagement = () => {
               </TableRow>
             </TableHead>
             <TableBody>
-              {/* --- 👇 MODIFICADO: Mensaje si no hay usuarios CON el filtro --- */}
+              {/* ---  MODIFICADO: Mensaje si no hay usuarios CON el filtro --- */}
               {users.length === 0 && (
                 <TableRow>
                   <TableCell colSpan={5} align="center">
@@ -144,7 +144,7 @@ const UserManagement = () => {
                   </TableCell>
                 </TableRow>
               )}
-              {/* --- 👆 FIN DE LA MODIFICACIÓN --- */}
+              {/* ---  FIN DE LA MODIFICACIÓN --- */}
 
               {users.map((user) => (
                 <TableRow
