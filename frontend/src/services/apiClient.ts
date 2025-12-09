@@ -1,13 +1,13 @@
 import axios from 'axios';
 import { useAuthStore } from '../store/authStore';
 
-// --- 👇 MODIFICACIÓN ---
+// --- MODIFICACIÓN ---
 // Ahora la baseURL es una ruta relativa.
 // Vite la interceptará y la enviará a http://localhost:8000
 const apiClient = axios.create({
   baseURL: '/api', 
 });
-// --- 👆 FIN DE LA MODIFICACIÓN ---
+// --- FIN DE LA MODIFICACIÓN ---
 
 // Interceptor de Peticiones:
 // (Sin cambios)
