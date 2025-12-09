@@ -4,11 +4,11 @@ from app import schemas, crud, database, models
 from app.auth_utils import get_current_user_with_roles
 from typing import List, Optional
 
-# --- 👇 AÑADIDO: Imports de tiempo y zona horaria ---
+# --- AÑADIDO: Imports de tiempo y zona horaria ---
 from datetime import datetime, time
 import pytz
 from app.models import DiaSemana
-# --- 👆 FIN DE LA MODIFICACIÓN ---
+# --- FIN DE LA MODIFICACIÓN ---
 
 router = APIRouter(
     prefix="/asignaturas",
