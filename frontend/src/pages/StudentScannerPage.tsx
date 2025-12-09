@@ -3,12 +3,12 @@ import {
   Typography, Box, TextField, Button,
   CircularProgress, Paper, Stack
 } from '@mui/material';
-// --- 👇 AÑADIDO: Importar iconos ---
+// --- AÑADIDO: Importar iconos ---
 import QrCodeScannerIcon from '@mui/icons-material/QrCodeScanner';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import ErrorIcon from '@mui/icons-material/Error';
 import ReplayIcon from '@mui/icons-material/Replay';
-// --- 👆 FIN DE LA MODIFICACIÓN ---
+// ---  FIN DE LA MODIFICACIÓN ---
 
 import QrScanner from '../components/QrScanner'; 
 import apiClient from '../services/apiClient';
@@ -20,9 +20,9 @@ const StudentScannerPage = () => {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   
-  // --- 👇 AÑADIDO: Estado para controlar el escáner ---
+  // ---  AÑADIDO: Estado para controlar el escáner ---
   const [isScanning, setIsScanning] = useState(true);
-  // --- 👆 FIN DE LA MODIFICACIÓN ---
+  // ---  FIN DE LA MODIFICACIÓN ---
 
   const studentName = useAuthStore((state) => state.user?.nombre);
 
@@ -36,9 +36,9 @@ const StudentScannerPage = () => {
     if (!navigator.geolocation) {
       setError("Tu navegador no soporta geolocalización.");
       setLoading(false);
-      // --- 👇 AÑADIDO: Detener escaneo ---
+      // --- AÑADIDO: Detener escaneo ---
       setIsScanning(false);
-      // --- 👆 FIN DE LA MODIFICACIÓN ---
+      // ---  FIN DE LA MODIFICACIÓN ---
       return;
     }
 
@@ -64,9 +64,9 @@ const StudentScannerPage = () => {
           console.error(err);
         } finally {
           setLoading(false);
-          // --- 👇 AÑADIDO: Detener escaneo (en éxito o error) ---
+          // ---  AÑADIDO: Detener escaneo (en éxito o error) ---
           setIsScanning(false);
-          // --- 👆 FIN DE LA MODIFICACIÓN ---
+          // ---  FIN DE LA MODIFICACIÓN ---
         }
       },
       (geoError) => {
@@ -77,22 +77,22 @@ const StudentScannerPage = () => {
           setError("No se pudo obtener tu ubicación. Inténtalo de nuevo.");
         }
         setLoading(false);
-        // --- 👇 AÑADIDO: Detener escaneo ---
+        // ---  AÑADIDO: Detener escaneo ---
         setIsScanning(false);
-        // --- 👆 FIN DE LA MODIFICACIÓN ---
+        // ---  FIN DE LA MODIFICACIÓN ---
       }
     );
   };
 
-  // --- 👇 AÑADIDO: Función para volver a escanear ---
+  // ---  AÑADIDO: Función para volver a escanear ---
   const handleScanAgain = () => {
     setIsScanning(true);
     setSuccess(null);
     setError(null);
   };
-  // --- 👆 FIN DE LA MODIFICACIÓN ---
+  // ---  FIN DE LA MODIFICACIÓN ---
 
-  // --- 👇 AÑADIDO: Componentes visuales para los estados ---
+  // ---  AÑADIDO: Componentes visuales para los estados ---
   const renderScanner = () => (
     <>
       <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
@@ -133,7 +133,7 @@ const StudentScannerPage = () => {
       </Button>
     </Box>
   );
-  // --- 👆 FIN DE LA MODIFICACIÓN ---
+  // ---  FIN DE LA MODIFICACIÓN ---
 
 
   return (
@@ -146,12 +146,12 @@ const StudentScannerPage = () => {
           </Typography>
         </Stack>
         
-        {/* --- 👇 MODIFICADO: Renderizado Condicional --- */}
+        {/* --- MODIFICADO: Renderizado Condicional --- */}
         {loading && renderLoading()}
         {!loading && success && renderSuccess()}
         {!loading && error && renderError()}
         {!loading && !success && !error && isScanning && renderScanner()}
-        {/* --- 👆 FIN DE LA MODIFICACIÓN --- */}
+        {/* --- FIN DE LA MODIFICACIÓN --- */}
       </Paper>
       
       {/* Modo Dev (no cambia) */}
