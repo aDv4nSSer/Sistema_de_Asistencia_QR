@@ -19,7 +19,7 @@ print("Cargando variables de entorno...")
 
 # 3. Importar los componentes de la app
 try:
-    # --- 👇 MODIFICADO: Importamos Base y engine ---
+    # ---  MODIFICADO: Importamos Base y engine ---
     from app.database import engine, Base, SessionLocal
     from app.models import Usuario
     from app import schemas
@@ -39,7 +39,7 @@ except Exception as e:
 def seed_database():
     print("Iniciando el proceso de siembra (seed)...")
     
-    # --- 👇 AÑADIDO: Lógica de Reseteo ---
+    # --- AÑADIDO: Lógica de Reseteo ---
     # Comprueba si se pasó el argumento '--reset'
     if '--reset' in sys.argv:
         print("\n--- ¡ADVERTENCIA MÁXIMA! ---")
@@ -61,7 +61,7 @@ def seed_database():
         print("\nIniciando borrado total (DROP ALL)...")
         Base.metadata.drop_all(bind=engine)
         print("... Tablas borradas.")
-    # --- 👆 FIN DE LA MODIFICACIÓN ---
+    # ---  FIN DE LA MODIFICACIÓN ---
 
     # 5. Crear todas las tablas
     try:
