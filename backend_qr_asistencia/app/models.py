@@ -41,7 +41,7 @@ class Usuario(Base):
         back_populates="alumnos_inscritos"
     )
 
-# --- 👇 AÑADIDO: Nuevo Modelo Horario ---
+# --- AÑADIDO: Nuevo Modelo Horario ---
 class DiaSemana(enum.Enum):
     lunes = "Lunes"
     martes = "Martes"
@@ -60,7 +60,7 @@ class Horario(Base):
     hora_fin = Column(String(5), nullable=False)   # Formato "HH:MM"
     
     asignatura = relationship("Asignatura", back_populates="horarios")
-# --- 👆 FIN DE LA MODIFICACIÓN ---
+# --- FIN DE LA MODIFICACIÓN ---
 
 
 class Asignatura(Base): 
@@ -78,9 +78,9 @@ class Asignatura(Base):
     )
     sesiones_clase = relationship("SesionClase", back_populates="asignatura")
     
-    # --- 👇 AÑADIDO: Relación con Horario ---
+    # ---  AÑADIDO: Relación con Horario ---
     horarios = relationship("Horario", back_populates="asignatura")
-    # --- 👆 FIN DE LA MODIFICACIÓN ---
+    # --- FIN DE LA MODIFICACIÓN ---
 
 
 class SesionClase(Base):
