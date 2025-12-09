@@ -31,7 +31,7 @@ const ProfessorClassList = ({ classes, loading, error, onGenerateQr }: Props) =>
   const renderContent = () => {
     if (loading) {
       return (
-        // --- 👇 CAMBIO 1: Centra las cajas (el grupo) ---
+        // ---  CAMBIO 1: Centra las cajas (el grupo) ---
         <Grid container component="div" spacing={3} sx={{ justifyContent: 'center' }}>
           {Array.from(new Array(3)).map((_, index) => (
             <Grid item component="div" xs={12} md={6} lg={4} key={index}>
@@ -52,19 +52,19 @@ const ProfessorClassList = ({ classes, loading, error, onGenerateQr }: Props) =>
       );
     }
     return (
-      // --- 👇 CAMBIO 1 (bis): Centra las cajas (el grupo) ---
+      // ---  CAMBIO 1 (bis): Centra las cajas (el grupo) ---
       <Grid container component="div" spacing={3} sx={{ justifyContent: 'center', mx: "auto" }}>
         {classes.map((clase) => (
           <Grid item component="div" xs={12} md={6} lg={4} key={clase.id}>
             <Card>
-              {/* --- 👇 CAMBIO 2: Centra el contenido DENTRO de la tarjeta --- */}
+              {/* ---  CAMBIO 2: Centra el contenido DENTRO de la tarjeta --- */}
               <CardContent sx={{ 
                 display: 'flex', 
                 flexDirection: 'column', 
                 gap: 2, 
                 alignItems: 'center' 
               }}>
-                {/* --- 👇 CAMBIO 3: Centra el bloque de texto --- */}
+                {/* ---  CAMBIO 3: Centra el bloque de texto --- */}
                 <Box sx={{ width: '100%', textAlign: 'center' }}>
                   <Typography variant="h6" noWrap title={clase.nombre}>
                     {clase.nombre}
@@ -75,7 +75,7 @@ const ProfessorClassList = ({ classes, loading, error, onGenerateQr }: Props) =>
                     {clase.hora_inicio} a {clase.hora_fin}
                   </Typography>
                 </Box>
-                {/* --- 👆 FIN DE LOS CAMBIOS INTERNOS --- */}
+                {/* ---  FIN DE LOS CAMBIOS INTERNOS --- */}
                 
                 {/* Botones de acción */}
                 <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} sx={{ width: '100%' }}>
