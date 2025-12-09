@@ -75,7 +75,7 @@ def desinscribir_alumno(
     
     return {"message": "Alumno desinscrito correctamente"}
 
-# --- 👇 AÑADIDO: GESTIÓN DE HORARIOS (Rol: TI o Admin) ---
+# --- AÑADIDO: GESTIÓN DE HORARIOS (Rol: TI o Admin) ---
 
 @router.post("/horarios/", response_model=schemas.Horario, status_code=status.HTTP_201_CREATED)
 def crear_horario_asignatura(
@@ -107,7 +107,7 @@ def eliminar_horario_asignatura(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Horario no encontrado")
     
     return {"message": "Horario eliminado correctamente"}
-# --- 👆 FIN DE LA MODIFICACIÓN ---
+# --- FIN DE LA MODIFICACIÓN ---
 
 
 # --- GESTIÓN DE REPORTES (Rol: Admin) ---
