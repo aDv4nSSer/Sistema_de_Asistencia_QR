@@ -16,7 +16,7 @@ import {
 import { useAuthStore } from '../../store/authStore';
 import logoUni from '../../assets/logo-uni.png'; 
 
-// --- 👇 AÑADIDO: Importamos el Navbar ---
+// ---  AÑADIDO: Importamos el Navbar ---
 import Navbar from './NavBar.tsx';
 
 const drawerWidth = 240;
@@ -125,10 +125,10 @@ const MainLayout = () => {
     <Box sx={{ display: 'flex' }}>
       <CssBaseline />
       
-      {/* --- 👇 MODIFICADO: Renderizamos el Navbar --- */}
+      {/* ---  MODIFICADO: Renderizamos el Navbar --- */}
       {/* Le pasamos la función para controlar el menú móvil */}
       <Navbar onDrawerToggle={handleDrawerToggle} />
-      {/* --- 👆 FIN DE LA MODIFICACIÓN --- */}
+      {/* ---  FIN DE LA MODIFICACIÓN --- */}
 
       {/* El <AppBar> y su contenido se eliminaron de aquí */}
 
