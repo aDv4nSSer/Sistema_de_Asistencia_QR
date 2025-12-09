@@ -10,10 +10,10 @@ import PersonAddIcon from '@mui/icons-material/PersonAdd';
 import DeleteIcon from '@mui/icons-material/Delete';
 import apiClient from '../services/apiClient';
 
-// --- 👇 AÑADIDO: Importar el nuevo componente ---
+// --- AÑADIDO: Importar el nuevo componente ---
 import ScheduleManager from '../components/admin/ScheduleManager';
 
-// --- 👇 AÑADIDO: Interfaz de Horario ---
+// --- AÑADIDO: Interfaz de Horario ---
 enum DiaSemana {
   lunes = "Lunes",
   martes = "Martes",
@@ -43,7 +43,7 @@ interface Asignatura {
   nombre: string;
   profesor: Usuario | null;
   alumnos_inscritos: Usuario[];
-  // --- 👇 AÑADIDO: horarios en la interfaz ---
+  // ---  AÑADIDO: horarios en la interfaz ---
   horarios: Horario[];
 }
 
@@ -213,13 +213,13 @@ const AdminAsignaturaDetailPage = () => {
         </TableContainer>
       </Paper>
 
-      {/* --- 👇 AÑADIDO: Tarjeta 2: Gestión de Horarios --- */}
+      {/* ---  AÑADIDO: Tarjeta 2: Gestión de Horarios --- */}
       <ScheduleManager 
         asignaturaId={asignatura.id}
         horariosActuales={asignatura.horarios}
         onHorarioChanged={fetchDetails} // Le decimos que recargue todo
       />
-      {/* --- 👆 FIN DE LA MODIFICACIÓN --- */}
+      {/* ---  FIN DE LA MODIFICACIÓN --- */}
     </Box>
   );
 };
