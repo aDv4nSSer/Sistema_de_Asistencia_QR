@@ -2,19 +2,19 @@ import { useState, useEffect } from 'react';
 import { 
   Box, Grid, Alert, Paper,
   Card, CardContent, Typography, Stack, Button,
-  // --- 👇 AÑADIDO: Para mostrar los horarios ---
+  // ---  AÑADIDO: Para mostrar los horarios ---
   List, ListItem, ListItemIcon, ListItemText, Chip
 } from '@mui/material';
 import CameraAltIcon from '@mui/icons-material/CameraAlt';
 import HistoryIcon from '@mui/icons-material/History';
 import HomeIcon from '@mui/icons-material/Home';
-// --- 👇 AÑADIDO: Icono de reloj ---
+// ---  AÑADIDO: Icono de reloj ---
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import { useNavigate } from 'react-router-dom';
 import apiClient from '../services/apiClient';
 import { useAuthStore } from '../store/authStore';
 
-// --- 👇 AÑADIDO: Interfaz de Horario ---
+// ---  AÑADIDO: Interfaz de Horario ---
 enum DiaSemana {
   lunes = "Lunes",
   martes = "Martes",
@@ -31,7 +31,7 @@ interface Horario {
   hora_inicio: string;
   hora_fin: string;
 }
-// --- 👆 FIN DE LA MODIFICACIÓN ---
+// ---  FIN DE LA MODIFICACIÓN ---
 
 // Interface para Asignatura
 interface Asignatura {
@@ -80,7 +80,7 @@ const StudentAsignaturasPage = () => {
         {asignaturas.map((asignatura) => (
           <Grid item xs={12} md={6} lg={4} key={asignatura.id}>
             <Card sx={{ height: '100%' }}>
-              {/* --- 👇 MODIFICACIÓN: Mostrar Horarios --- */}
+              {/* ---  MODIFICACIÓN: Mostrar Horarios --- */}
               <CardContent sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                 <Box sx={{ width: '100%' }}>
                   <Typography variant="h6" noWrap title={asignatura.nombre}>
@@ -113,7 +113,7 @@ const StudentAsignaturasPage = () => {
                   )}
                 </Box>
               </CardContent>
-              {/* --- 👆 FIN DE LA MODIFICACIÓN --- */}
+              {/* ---  FIN DE LA MODIFICACIÓN --- */}
             </Card>
           </Grid>
         ))}
